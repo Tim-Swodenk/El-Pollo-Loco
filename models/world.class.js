@@ -7,6 +7,7 @@ class World {
   camera_x = 0;
   statusBar = new StatusBar();
   throwableObjects = [];
+  lastCameraX = 0;
 
   constructor(canvas, keyboard) {
     this.ctx = canvas.getContext("2d");
@@ -15,6 +16,25 @@ class World {
     this.draw();
     this.setWorld();
     this.run();
+    this.startChickenSpawner();
+  }
+
+  startChickenSpawner() {
+    setInterval(() => {
+      if (this.camera_x < this.lastCameraX) {
+        this.spawnChicken();
+        this.lastCameraX = this.camera_x;
+      }
+    }, 3000);
+  }
+
+  spawnChicken() {
+    if (this.camera_x >= -1700) {
+      let spawnX = -this.camera_x + this.canvas.width + 200;
+      let chicken = new Chicken();
+      chicken.x = spawnX;
+      this.level.enemies.push(chicken);
+    }
   }
 
   setWorld() {

@@ -1,5 +1,5 @@
 class Character extends MovableObject {
-  y = 20;
+  y = 90;
   height = 350;
   width = 150;
   speed = 10;
@@ -41,6 +41,8 @@ class Character extends MovableObject {
 
   world;
 
+  isHurting = false;
+
   constructor() {
     super().loadImage("assets/img/2_character_pepe/2_walk/W-21.png");
     this.loadImages(this.IMAGES_WALKING);
@@ -76,13 +78,41 @@ class Character extends MovableObject {
       } else if (this.isHurt()) {
         this.playAnimation(this.IMAGES_HURT);
       } else if (this.isAboveGround()) {
-        this.playAnimation(this.IMAGES_JUMPING);
+        this.jumpAnimation();
       } else {
         if (this.world.keyboard.RIGHT || this.world.keyboard.LEFT) {
           //Walk animation
           this.playAnimation(this.IMAGES_WALKING);
         }
       }
-    }, 50);
+    }, 60);
+  }
+
+  jumpAnimation() {
+    const yStart = 90;
+    const yPeak = -47.5;
+    const yEnd = 90;
+
+    let images = this.IMAGES_JUMPING;
+
+    let progress;
+    if (this.y <= yStart && this.y >= yPeak) {
+      progress = (yStart - this.y) / (yStart - yPeak);
+    } else if (this.y < yStart && this.y < yPeak) {
+      progress = 1;
+    } else {
+      progress = (this.y - yPeak) / (yEnd - yPeak);
+      progress = 1 + progress;
+    }
+
+    let frame;
+    if (progress <= 1) {
+      frame = Math.round(progress * 3);
+    } else {
+      frame = 3 + Math.round((progress - 1) * 5);
+    }
+    frame = Math.max(0, Math.min(images.length - 1, frame));
+
+    this.img = this.imageCache[images[frame]];
   }
 }
