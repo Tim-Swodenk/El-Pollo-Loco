@@ -15,11 +15,14 @@ class ThrowableObject extends MovableObject {
     "assets/img/6_salsa_bottle/bottle_rotation/bottle_splash/6_bottle_splash.png",
   ];
 
+  hasSplashed = false;
+
   constructor(x, y) {
     super().loadImage(
       "assets/img/6_salsa_bottle/bottle_rotation/1_bottle_rotation.png"
     );
     this.loadImages(this.IMAGES_ROTATION);
+    this.loadImages(this.IMAGES_SPLASH);
     this.x = x;
     this.y = y;
     this.height = 100;
@@ -27,17 +30,53 @@ class ThrowableObject extends MovableObject {
     this.animate();
   }
 
+  /**
+   * Checks if the bottle is still above the ground level.
+   * @returns {boolean} True if y-position is smaller than ground height.
+   */
+  isAboveGround() {
+    return this.y < 380;
+  }
+
+  /**
+   * Applies gravity and stops once the bottle hits the ground.
+   */
+  applyGravity() {
+    this.gravityInterval = setInterval(() => {
+      if (this.isAboveGround() || this.speedY > 0) {
+        this.y -= this.speedY;
+        this.speedY -= this.acceleration;
+      } else {
+        this.y = 380;
+        this.speedY = 0;
+        clearInterval(this.gravityInterval);
+      }
+    }, 1000 / 30);
+  }
+
   throw(x, y) {
     this.speedY = 30;
     this.applyGravity();
-    setInterval(() => {
-      this.x += 10;
+    this.throwInterval = setInterval(() => {
+      if (this.isAboveGround()) {
+        this.x += 10;
+      } else {
+        clearInterval(this.throwInterval);
+      }
     }, 25);
   }
 
   animate() {
-    setInterval(() => {
-      this.playAnimation(this.IMAGES_ROTATION);
+    this.animationInterval = setInterval(() => {
+      if (this.isAboveGround() && !this.hasSplashed) {
+        this.playAnimation(this.IMAGES_ROTATION);
+      } else if (!this.hasSplashed) {
+        this.hasSplashed = true;
+        this.playAnimation(this.IMAGES_SPLASH);
+        this.removeFromWorld();
+      }
     }, 80);
   }
+
+  removeFromWorld() {}
 }

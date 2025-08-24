@@ -89,13 +89,14 @@ class Character extends MovableObject {
   }
 
   jumpAnimation() {
-    const yStart = 90;
-    const yPeak = -47.5;
-    const yEnd = 90;
+    let yStart = 90;
+    let yPeak = -47.5;
+    let yEnd = 90;
 
     let images = this.IMAGES_JUMPING;
 
     let progress;
+
     if (this.y <= yStart && this.y >= yPeak) {
       progress = (yStart - this.y) / (yStart - yPeak);
     } else if (this.y < yStart && this.y < yPeak) {
@@ -106,6 +107,7 @@ class Character extends MovableObject {
     }
 
     let frame;
+
     if (progress <= 1) {
       frame = Math.round(progress * 3);
     } else {
