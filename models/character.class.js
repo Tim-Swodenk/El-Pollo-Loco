@@ -1,5 +1,15 @@
+/**
+ * Main playable character controlled by the user.
+ * @extends MovableObject
+ */
 class Character extends MovableObject {
-  y = 90;
+  /**
+   * Y-coordinate representing the ground level for the character.
+   * @type {number}
+   */
+  static GROUND_LEVEL = 90;
+
+  y = Character.GROUND_LEVEL;
   height = 350;
   width = 150;
   speed = 10;
@@ -43,6 +53,9 @@ class Character extends MovableObject {
 
   isHurting = false;
 
+  /**
+   * Initializes the character and loads animations.
+   */
   constructor() {
     super().loadImage("assets/img/2_character_pepe/2_walk/W-21.png");
     this.loadImages(this.IMAGES_WALKING);
@@ -53,6 +66,10 @@ class Character extends MovableObject {
     this.animate();
   }
 
+  /**
+   * Handles movement and animation logic.
+   * @returns {void}
+   */
   animate() {
     setInterval(() => {
       if (this.world.keyboard.RIGHT && this.x < this.world.level.level_end_x) {
@@ -88,10 +105,14 @@ class Character extends MovableObject {
     }, 60);
   }
 
+  /**
+   * Displays a jump animation based on the vertical position.
+   * @returns {void}
+   */
   jumpAnimation() {
-    let yStart = 90;
+    let yStart = Character.GROUND_LEVEL;
     let yPeak = -47.5;
-    let yEnd = 90;
+    let yEnd = Character.GROUND_LEVEL;
 
     let images = this.IMAGES_JUMPING;
 
@@ -116,5 +137,13 @@ class Character extends MovableObject {
     frame = Math.max(0, Math.min(images.length - 1, frame));
 
     this.img = this.imageCache[images[frame]];
+  }
+
+  /**
+   * Determines if the character is above the ground level.
+   * @returns {boolean} True if above ground.
+   */
+  isAboveGround() {
+    return this.y < Character.GROUND_LEVEL;
   }
 }

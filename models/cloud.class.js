@@ -1,8 +1,15 @@
+/**
+ * Cloud background object that scrolls across the sky.
+ * @extends MovableObject
+ */
 class Cloud extends MovableObject {
   y = 10;
   width = 400;
   height = 400;
 
+  /**
+   * Creates a cloud at a random horizontal position.
+   */
   constructor() {
     super().loadImage("assets/img/5_background/layers/4_clouds/1.png");
 
@@ -10,6 +17,10 @@ class Cloud extends MovableObject {
     this.animate();
   }
 
+  /**
+   * Moves the cloud to the left continuously.
+   * @returns {void}
+   */
   animate() {
     setInterval(() => {
       this.moveLeft();

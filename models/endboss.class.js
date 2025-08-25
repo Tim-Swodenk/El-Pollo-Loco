@@ -1,3 +1,7 @@
+/**
+ * Final boss character encountered at the end of the level.
+ * @extends MovableObject
+ */
 class Endboss extends MovableObject {
   height = 400;
   width = 250;
@@ -14,6 +18,9 @@ class Endboss extends MovableObject {
     "assets/img/4_enemie_boss_chicken/2_alert/G12.png",
   ];
 
+  /**
+   * Initializes the end boss and starts its animation.
+   */
   constructor() {
     super().loadImage(this.IMAGES_WALKING[0]);
     this.loadImages(this.IMAGES_WALKING);
@@ -21,6 +28,10 @@ class Endboss extends MovableObject {
     this.animate();
   }
 
+  /**
+   * Plays the alert animation.
+   * @returns {void}
+   */
   animate() {
     setInterval(() => {
       this.playAnimation(this.IMAGES_WALKING);

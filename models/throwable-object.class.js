@@ -1,4 +1,14 @@
+/**
+ * Throwable salsa bottle that can splash upon impact.
+ * @extends MovableObject
+ */
 class ThrowableObject extends MovableObject {
+  /**
+   * Y-coordinate representing the ground level for throwable objects.
+   * @type {number}
+   */
+  static GROUND_LEVEL = 380;
+
   IMAGES_ROTATION = [
     "assets/img/6_salsa_bottle/bottle_rotation/1_bottle_rotation.png",
     "assets/img/6_salsa_bottle/bottle_rotation/2_bottle_rotation.png",
@@ -17,6 +27,11 @@ class ThrowableObject extends MovableObject {
 
   hasSplashed = false;
 
+  /**
+   * Creates a throwable bottle at the given position.
+   * @param {number} x - Horizontal position.
+   * @param {number} y - Vertical position.
+   */
   constructor(x, y) {
     super().loadImage(
       "assets/img/6_salsa_bottle/bottle_rotation/1_bottle_rotation.png"
@@ -35,11 +50,12 @@ class ThrowableObject extends MovableObject {
    * @returns {boolean} True if y-position is smaller than ground height.
    */
   isAboveGround() {
-    return this.y < 380;
+    return this.y < ThrowableObject.GROUND_LEVEL;
   }
 
   /**
    * Applies gravity and stops once the bottle hits the ground.
+   * @returns {void}
    */
   applyGravity() {
     this.gravityInterval = setInterval(() => {
@@ -47,13 +63,19 @@ class ThrowableObject extends MovableObject {
         this.y -= this.speedY;
         this.speedY -= this.acceleration;
       } else {
-        this.y = 380;
+        this.y = ThrowableObject.GROUND_LEVEL;
         this.speedY = 0;
         clearInterval(this.gravityInterval);
       }
     }, 1000 / 30);
   }
 
+  /**
+   * Starts the throw and applies horizontal movement.
+   * @param {number} x - Unused horizontal parameter.
+   * @param {number} y - Unused vertical parameter.
+   * @returns {void}
+   */
   throw(x, y) {
     this.speedY = 30;
     this.applyGravity();
@@ -66,6 +88,10 @@ class ThrowableObject extends MovableObject {
     }, 25);
   }
 
+  /**
+   * Animates the bottle rotation and splash sequence.
+   * @returns {void}
+   */
   animate() {
     this.animationInterval = setInterval(() => {
       if (this.isAboveGround() && !this.hasSplashed) {
@@ -78,6 +104,10 @@ class ThrowableObject extends MovableObject {
     }, 80);
   }
 
+  /**
+   * Plays the splash animation once after impact.
+   * @returns {void}
+   */
   playSplashAnimationOnce() {
     let i = 0;
     this.splashInterval = setInterval(() => {
@@ -90,6 +120,10 @@ class ThrowableObject extends MovableObject {
     }, 80);
   }
 
+  /**
+   * Removes the bottle from the world after the splash animation.
+   * @returns {void}
+   */
   removeFromWorld() {
     setTimeout(() => {
       if (this.world && this.world.throwableObjects) {

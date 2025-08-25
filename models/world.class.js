@@ -1,3 +1,6 @@
+/**
+ * Main game world tying together all objects and rendering.
+ */
 class World {
   character = new Character();
   level = level1;
@@ -12,6 +15,11 @@ class World {
   collectedBottles = 0;
   totalBottles = 0;
 
+  /**
+   * Creates the game world.
+   * @param {HTMLCanvasElement} canvas - Canvas to render on.
+   * @param {Keyboard} keyboard - Input keyboard instance.
+   */
   constructor(canvas, keyboard) {
     this.ctx = canvas.getContext("2d");
     this.canvas = canvas;
@@ -22,6 +30,10 @@ class World {
     this.startChickenSpawner();
   }
 
+  /**
+   * Periodically checks camera movement to spawn chickens.
+   * @returns {void}
+   */
   startChickenSpawner() {
     setInterval(() => {
       if (this.camera_x < this.lastCameraX) {
@@ -31,6 +43,10 @@ class World {
     }, 3000);
   }
 
+  /**
+   * Spawns a chicken just outside the viewport.
+   * @returns {void}
+   */
   spawnChicken() {
     if (this.camera_x >= -1700) {
       let spawnX = -this.camera_x + this.canvas.width + 200;
@@ -40,11 +56,19 @@ class World {
     }
   }
 
+  /**
+   * Assigns the world reference to contained objects.
+   * @returns {void}
+   */
   setWorld() {
     this.character.world = this;
     this.level.collectableObjects.forEach((obj) => (obj.world = this));
   }
 
+  /**
+   * Starts the main game loop checking collisions and throws.
+   * @returns {void}
+   */
   run() {
     setInterval(() => {
       this.checkCollisions();
@@ -52,18 +76,25 @@ class World {
     }, 200);
   }
 
+  /**
+   * Handles throwing bottles when the D key is pressed.
+   * @returns {void}
+   */
   checkThrowObjects() {
     if (this.keyboard.D) {
       let bottle = new ThrowableObject(
         this.character.x,
-        +250,
-        this.character.y
+        this.character.y + 200
       );
       bottle.world = this;
       this.throwableObjects.push(bottle);
     }
   }
 
+  /**
+   * Checks collisions between the character and other objects.
+   * @returns {void}
+   */
   checkCollisions() {
     this.level.enemies.forEach((enemy) => {
       if (this.character.isColliding(enemy)) {
@@ -83,6 +114,10 @@ class World {
     });
   }
 
+  /**
+   * Clears the canvas and draws all game objects.
+   * @returns {void}
+   */
   draw = () => {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -105,12 +140,22 @@ class World {
     requestAnimationFrame(this.draw);
   };
 
+  /**
+   * Adds multiple objects to the canvas.
+   * @param {DrawableObject[]} objects - Objects to add.
+   * @returns {void}
+   */
   addObjectsToMap(objects) {
     objects.forEach((o) => {
       this.addToMap(o);
     });
   }
 
+  /**
+   * Draws a single movable object and handles direction flipping.
+   * @param {MovableObject} mo - Object to draw.
+   * @returns {void}
+   */
   addToMap(mo) {
     if (mo.otherDirection) {
       this.flipImage(mo);
@@ -124,6 +169,11 @@ class World {
     }
   }
 
+  /**
+   * Flips an image horizontally for left-facing orientation.
+   * @param {MovableObject} mo - Object to flip.
+   * @returns {void}
+   */
   flipImage(mo) {
     this.ctx.save();
     this.ctx.translate(mo.width, 0);
@@ -131,6 +181,11 @@ class World {
     mo.x = mo.x * -1;
   }
 
+  /**
+   * Restores the image after flipping.
+   * @param {MovableObject} mo - Previously flipped object.
+   * @returns {void}
+   */
   flipImageBack(mo) {
     mo.x = mo.x * -1;
     this.ctx.restore();
