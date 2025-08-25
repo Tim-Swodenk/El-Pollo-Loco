@@ -72,11 +72,35 @@ class ThrowableObject extends MovableObject {
         this.playAnimation(this.IMAGES_ROTATION);
       } else if (!this.hasSplashed) {
         this.hasSplashed = true;
-        this.playAnimation(this.IMAGES_SPLASH);
+        clearInterval(this.animationInterval);
+        this.playSplashAnimationOnce();
+      }
+    }, 80);
+  }
+
+  playSplashAnimationOnce() {
+    let i = 0;
+    this.splashInterval = setInterval(() => {
+      this.img = this.imageCache[this.IMAGES_SPLASH[i]];
+      i++;
+      if (i >= this.IMAGES_SPLASH.length) {
+        clearInterval(this.splashInterval);
         this.removeFromWorld();
       }
     }, 80);
   }
 
-  removeFromWorld() {}
+  removeFromWorld() {
+    setTimeout(() => {
+      if (this.world && this.world.throwableObjects) {
+        const index = this.world.throwableObjects.indexOf(this);
+        if (index > -1) {
+          this.world.throwableObjects.splice(index, 1);
+        }
+      }
+      clearInterval(this.animationInterval);
+      clearInterval(this.throwInterval);
+      clearInterval(this.gravityInterval);
+    }, 500);
+  }
 }
