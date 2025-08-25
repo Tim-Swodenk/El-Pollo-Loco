@@ -69,5 +69,12 @@ const level1 = new Level(
       719 * 3
     ),
   ],
-  [new CollectableBottle(), new CollectableBottle(), new CollectableBottle()]
+  [
+    new CollectableBottle(),
+    new CollectableBottle(),
+    new CollectableBottle(),
+    new CollectableBottle(),
+    new CollectableBottle(),
+    new CollectableBottle(),
+  ]
 );

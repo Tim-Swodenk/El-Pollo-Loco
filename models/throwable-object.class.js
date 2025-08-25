@@ -7,7 +7,7 @@ class ThrowableObject extends MovableObject {
    * Y-coordinate representing the ground level for throwable objects.
    * @type {number}
    */
-  static GROUND_LEVEL = 380;
+  static GROUND_LEVEL = 370;
 
   IMAGES_ROTATION = [
     "assets/img/6_salsa_bottle/bottle_rotation/1_bottle_rotation.png",

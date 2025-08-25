@@ -43,10 +43,11 @@ class CollectableBottle extends MovableObject {
     if (this.animationInterval) {
       clearInterval(this.animationInterval);
     }
-    if (this.world && this.world.collectableObjects) {
-      const index = this.world.collectableObjects.indexOf(this);
+    if (this.world && this.world.level && this.world.level.collectableObjects) {
+      const index = this.world.level.collectableObjects.indexOf(this);
       if (index > -1) {
-        this.world.collectableObjects.splice(index, 1);
+        this.world.level.collectableObjects.splice(index, 1);
+        this.world = null;
       }
     }
   }

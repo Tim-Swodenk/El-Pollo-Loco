@@ -13,7 +13,7 @@ class World {
   throwableObjects = [];
   lastCameraX = 0;
   collectedBottles = 0;
-  totalBottles = 0;
+  maxBottles = 5;
 
   /**
    * Creates the game world.
@@ -63,6 +63,7 @@ class World {
   setWorld() {
     this.character.world = this;
     this.level.collectableObjects.forEach((obj) => (obj.world = this));
+    this.totalBottles = this.level.collectableObjects.length;
   }
 
   /**
@@ -81,13 +82,16 @@ class World {
    * @returns {void}
    */
   checkThrowObjects() {
-    if (this.keyboard.D) {
+    if (this.keyboard.D && this.collectedBottles > 0) {
       let bottle = new ThrowableObject(
         this.character.x,
         this.character.y + 200
       );
       bottle.world = this;
       this.throwableObjects.push(bottle);
+      this.collectedBottles--;
+      let perc = (this.collectedBottles / this.maxBottles) * 100;
+      this.statusBarBottles.setPercentage(perc);
     }
   }
 
@@ -103,12 +107,13 @@ class World {
       }
     });
     this.level.collectableObjects.forEach((obj) => {
-      if (this.character.isColliding(obj)) {
-        console.log(obj);
-
-        obj.collect(); // Flasche entfernen
-        this.collectedBottles = (this.collectedBottles || 0) + 1;
-        let perc = (this.collectedBottles / this.totalBottles) * 100;
+      if (
+        this.character.isColliding(obj) &&
+        this.collectedBottles < this.maxBottles
+      ) {
+        obj.collect();
+        this.collectedBottles++;
+        let perc = (this.collectedBottles / this.maxBottles) * 100;
         this.statusBarBottles.setPercentage(perc);
       }
     });

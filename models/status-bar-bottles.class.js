@@ -33,6 +33,8 @@ class StatusBarBottles extends DrawableObject {
    * @returns {void}
    */
   setPercentage(percantage) {
+    console.log(percantage);
+
     this.percantage = percantage;
     let path = this.IMAGES[this.resolveImageIndex()];
     this.img = this.imageCache[path];
@@ -45,13 +47,13 @@ class StatusBarBottles extends DrawableObject {
   resolveImageIndex() {
     if (this.percantage == 100) {
       return 5;
-    } else if (this.percantage > 80) {
+    } else if (this.percantage >= 80) {
       return 4;
-    } else if (this.percantage > 60) {
+    } else if (this.percantage >= 60) {
       return 3;
-    } else if (this.percantage > 40) {
+    } else if (this.percantage >= 40) {
       return 2;
-    } else if (this.percantage > 20) {
+    } else if (this.percantage >= 20) {
       return 1;
     } else {
       return 0;
