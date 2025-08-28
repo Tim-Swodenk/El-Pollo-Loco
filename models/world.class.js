@@ -55,6 +55,7 @@ class World {
       let spawnX = -this.camera_x + this.canvas.width + 200;
       let chicken = new Chicken();
       chicken.x = spawnX;
+      chicken.world = this;
       this.level.enemies.push(chicken);
     }
   }
@@ -65,6 +66,7 @@ class World {
    */
   setWorld() {
     this.character.world = this;
+    this.level.enemies.forEach((enemy) => (enemy.world = this));
     this.level.collectableObjects.forEach((obj) => (obj.world = this));
     this.level.coinObjects.forEach((obj) => (obj.world = this));
     this.totalBottles = this.level.collectableObjects.length;
@@ -100,14 +102,34 @@ class World {
   }
 
   /**
+   * Determines if the character's bottom edge hits the enemy's top edge while falling.
+   * @param {MovableObject} char - The character object.
+   * @param {MovableObject} enemy - The enemy to test against.
+   * @returns {boolean} True if the character stomps the enemy.
+   */
+  isTopBottomCollision(char, enemy) {
+    let charBottom = char.y - 1000;
+    let enemyTop = enemy.y + enemy.height;
+    let overlapsX =
+      char.x + char.width - char.offset.right > enemy.x + enemy.offset.left &&
+      char.x + char.offset.left < enemy.x + enemy.width - enemy.offset.right;
+
+    return overlapsX && charBottom <= enemyTop && char.speedY < 0;
+  }
+
+  /**
    * Checks collisions between the character and other objects.
    * @returns {void}
    */
   checkCollisions() {
     this.level.enemies.forEach((enemy) => {
-      if (this.character.isColliding(enemy)) {
-        this.character.hit();
-        this.statusBar.setPercentage(this.character.energy);
+      if (!enemy.dead) {
+        if (this.isTopBottomCollision(this.character, enemy)) {
+          enemy.die();
+        } else if (this.character.isColliding(enemy)) {
+          this.character.hit();
+          this.statusBar.setPercentage(this.character.energy);
+        }
       }
     });
     this.level.collectableObjects.forEach((obj) => {

@@ -37,7 +37,8 @@ class DrawableObject {
   drawFrame(ctx) {
     if (
       (this.offset && this instanceof Chicken) ||
-      this instanceof CollectableBottle
+      this instanceof Character ||
+      this instanceof Endboss
     ) {
       ctx.beginPath();
       ctx.lineWidth = "2";

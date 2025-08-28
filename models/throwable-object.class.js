@@ -72,11 +72,9 @@ class ThrowableObject extends MovableObject {
 
   /**
    * Starts the throw and applies horizontal movement.
-   * @param {number} x - Unused horizontal parameter.
-   * @param {number} y - Unused vertical parameter.
    * @returns {void}
    */
-  throw(x, y) {
+  throw() {
     this.speedY = 30;
     this.applyGravity();
     this.throwInterval = setInterval(() => {

@@ -33,8 +33,6 @@ class StatusBarCoins extends DrawableObject {
    * @returns {void}
    */
   setPercentage(percantage) {
-    console.log(percantage);
-
     this.percantage = percantage;
     let path = this.IMAGES[this.resolveImageIndex()];
     this.img = this.imageCache[path];

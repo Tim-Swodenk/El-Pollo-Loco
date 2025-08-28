@@ -7,7 +7,7 @@ class Level {
   backgroundObjects;
   collectableObjects;
   coinObjects;
-  level_end_x = 2200;
+  level_end_x = 2800;
 
   /**
    * Creates a level instance.
