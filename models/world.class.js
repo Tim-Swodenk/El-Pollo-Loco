@@ -10,10 +10,13 @@ class World {
   camera_x = 0;
   statusBar = new StatusBar();
   statusBarBottles = new StatusBarBottles();
+  statusBarCoins = new StatusBarCoins();
   throwableObjects = [];
   lastCameraX = 0;
   collectedBottles = 0;
   maxBottles = 5;
+  collectedCoins = 0;
+  maxCoins = 5;
 
   /**
    * Creates the game world.
@@ -63,6 +66,7 @@ class World {
   setWorld() {
     this.character.world = this;
     this.level.collectableObjects.forEach((obj) => (obj.world = this));
+    this.level.coinObjects.forEach((obj) => (obj.world = this));
     this.totalBottles = this.level.collectableObjects.length;
   }
 
@@ -117,6 +121,20 @@ class World {
         this.statusBarBottles.setPercentage(perc);
       }
     });
+    this.level.coinObjects.forEach((obj) => {
+      if (this.character.isColliding(obj)) {
+        obj.collect();
+        this.collectedCoins++;
+        let perc = (this.collectedCoins / this.maxCoins) * 100;
+        this.statusBarCoins.setPercentage(perc);
+        if (this.collectedCoins == this.maxCoins) {
+          this.character.heal(20);
+          this.statusBar.setPercentage(this.character.energy);
+          this.collectedCoins = 0;
+          this.statusBarCoins.setPercentage(0);
+        }
+      }
+    });
   }
 
   /**
@@ -132,6 +150,7 @@ class World {
     this.ctx.translate(-this.camera_x, 0); //Back
     this.addToMap(this.statusBar);
     this.addToMap(this.statusBarBottles);
+    this.addToMap(this.statusBarCoins);
     this.ctx.translate(this.camera_x, 0); //Forward
 
     this.addToMap(this.character);
@@ -139,6 +158,7 @@ class World {
     this.addObjectsToMap(this.level.clouds);
     this.addObjectsToMap(this.throwableObjects);
     this.addObjectsToMap(this.level.collectableObjects);
+    this.addObjectsToMap(this.level.coinObjects);
 
     this.ctx.translate(-this.camera_x, 0);
 

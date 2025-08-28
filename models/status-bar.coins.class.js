@@ -1,38 +1,40 @@
 /**
- * Status bar showing collected bottle percentage.
+ * Status bar showing collected coin percentage.
  * @extends DrawableObject
  */
-class StatusBarBottles extends DrawableObject {
+class StatusBarCoins extends DrawableObject {
   IMAGES = [
-    "assets/img/7_statusbars/1_statusbar/3_statusbar_bottle/green/0.png",
-    "assets/img/7_statusbars/1_statusbar/3_statusbar_bottle/green/20.png",
-    "assets/img/7_statusbars/1_statusbar/3_statusbar_bottle/green/40.png",
-    "assets/img/7_statusbars/1_statusbar/3_statusbar_bottle/green/60.png",
-    "assets/img/7_statusbars/1_statusbar/3_statusbar_bottle/green/80.png",
-    "assets/img/7_statusbars/1_statusbar/3_statusbar_bottle/green/100.png",
+    "assets/img/7_statusbars/1_statusbar/1_statusbar_coin/green/0.png",
+    "assets/img/7_statusbars/1_statusbar/1_statusbar_coin/green/20.png",
+    "assets/img/7_statusbars/1_statusbar/1_statusbar_coin/green/40.png",
+    "assets/img/7_statusbars/1_statusbar/1_statusbar_coin/green/60.png",
+    "assets/img/7_statusbars/1_statusbar/1_statusbar_coin/green/80.png",
+    "assets/img/7_statusbars/1_statusbar/1_statusbar_coin/green/100.png",
   ];
 
   percantage = 0;
 
   /**
-   * Creates the bottle status bar and loads its images.
+   * Creates the coin status bar and loads its images.
    */
   constructor() {
     super();
     this.loadImages(this.IMAGES);
     this.x = 30;
-    this.y = 50;
+    this.y = 100;
     this.width = 200;
     this.height = 60;
     this.setPercentage(0);
   }
 
   /**
-   * Updates the displayed bottle percentage.
+   * Updates the displayed coin percentage.
    * @param {number} percantage - Value from 0 to 100.
    * @returns {void}
    */
   setPercentage(percantage) {
+    console.log(percantage);
+
     this.percantage = percantage;
     let path = this.IMAGES[this.resolveImageIndex()];
     this.img = this.imageCache[path];

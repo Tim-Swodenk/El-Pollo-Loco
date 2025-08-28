@@ -62,6 +62,15 @@ class MovableObject extends DrawableObject {
   }
 
   /**
+   * Restores energy by a given amount up to a maximum of 100.
+   * @param {number} amount - Amount of energy to restore.
+   * @returns {void}
+   */
+  heal(amount) {
+    this.energy = Math.min(this.energy + amount, 100);
+  }
+
+  /**
    * Checks if the object was recently hit.
    * @returns {boolean} True if the object is still hurt.
    */
