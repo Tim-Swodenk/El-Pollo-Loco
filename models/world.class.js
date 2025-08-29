@@ -8,7 +8,7 @@ class World {
   ctx;
   keyboard;
   camera_x = 0;
-  statusBar = new StatusBar();
+  statusBarHealth = new StatusBarHealth();
   statusBarBottles = new StatusBarBottles();
   statusBarCoins = new StatusBarCoins();
   statusBarEndboss = new StatusBarEndboss();
@@ -116,7 +116,7 @@ class World {
       if (!enemy.dead && this.character.isColliding(enemy)) {
         if (!MovableObject.isTopBottomCollision(this.character, enemy)) {
           this.character.hit();
-          this.statusBar.setPercentage(this.character.energy);
+          this.statusBarHealth.setPercentage(this.character.energy);
         }
       }
     });
@@ -158,7 +158,7 @@ class World {
         this.statusBarCoins.setPercentage(perc);
         if (this.collectedCoins == this.maxCoins) {
           this.character.heal(20);
-          this.statusBar.setPercentage(this.character.energy);
+          this.statusBarHealth.setPercentage(this.character.energy);
           this.collectedCoins = 0;
           this.statusBarCoins.setPercentage(0);
         }
@@ -185,7 +185,7 @@ class World {
         clearInterval(bottle.gravityInterval);
         bottle.playSplashAnimationOnce();
         endboss.hit();
-        this.statusBar.setPercentage(endboss.energy);
+        this.statusBarEndboss.setPercentage(endboss.energy);
       }
     });
   }
@@ -201,7 +201,7 @@ class World {
     this.addObjectsToMap(this.level.backgroundObjects);
 
     this.ctx.translate(-this.camera_x, 0); //Back
-    this.addToMap(this.statusBar);
+    this.addToMap(this.statusBarHealth);
     this.addToMap(this.statusBarBottles);
     this.addToMap(this.statusBarCoins);
     if (
