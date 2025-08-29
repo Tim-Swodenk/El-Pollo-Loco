@@ -78,12 +78,12 @@ class World {
    */
   run() {
     setInterval(() => {
-      this.checkCollisionsCharacter();
       this.checkCollisionsStomping();
+      this.checkCollisionsCharacter();
       this.checkCollisionsBottle();
       this.checkCollisionsCoins();
       this.checkThrowObjects();
-    }, 100);
+    }, 200);
   }
 
   /**
@@ -111,8 +111,10 @@ class World {
   checkCollisionsCharacter() {
     this.level.enemies.forEach((enemy) => {
       if (!enemy.dead && this.character.isColliding(enemy)) {
-        this.character.hit();
-        this.statusBar.setPercentage(this.character.energy);
+        if (!MovableObject.isTopBottomCollision(this.character, enemy)) {
+          this.character.hit();
+          this.statusBar.setPercentage(this.character.energy);
+        }
       }
     });
   }

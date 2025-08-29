@@ -19,8 +19,10 @@ class MovableObject extends DrawableObject {
       if (this.isAboveGround() || this.speedY > 0) {
         this.y -= this.speedY;
         this.speedY -= this.acceleration;
+      } else {
+        this.speedY = 0;
       }
-    }, 1000 / 30); // 1000 / 30
+    }, 1000 / 30);
   }
 
   /**
@@ -51,19 +53,20 @@ class MovableObject extends DrawableObject {
 
   /**
    * Determines if the character's bottom edge hits the enemy's top edge while falling.
+   * * Adds a 20px downward margin to enlarge the stomp hitbox.
    * @param {MovableObject} char - The character object.
    * @param {MovableObject} enemy - The enemy to test against.
    * @returns {boolean} True if the character stomps the enemy.
    */
   static isTopBottomCollision(char, enemy) {
     let charBottom = char.y + char.height - char.offset.bottom;
-    let enemyTop = enemy.y - enemy.offset.top - 20;
+    let enemyStompTop = enemy.y + enemy.offset.top - 20;
 
     let overlapsX =
       char.x + char.width - char.offset.right > enemy.x + enemy.offset.left &&
       char.x + char.offset.left < enemy.x + enemy.width - enemy.offset.right;
 
-    return overlapsX && charBottom >= enemyTop && char.speedY < 0;
+    return overlapsX && charBottom >= enemyStompTop && char.speedY < 0;
   }
 
   /**
