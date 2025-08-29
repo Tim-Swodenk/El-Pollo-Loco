@@ -6,6 +6,8 @@ class Endboss extends MovableObject {
   height = 400;
   width = 250;
   y = 60;
+  energy = 100;
+  animationInterval;
 
   IMAGES_WALKING = [
     "assets/img/4_enemie_boss_chicken/2_alert/G5.png",
@@ -34,8 +36,41 @@ class Endboss extends MovableObject {
    * @returns {void}
    */
   animate() {
-    setInterval(() => {
+    this.animationInterval = setInterval(() => {
       this.playAnimation(this.IMAGES_WALKING);
     }, 200);
+  }
+
+  /**
+   * Reduces energy by the given damage and checks for death and updates the endboss status bar when hit.
+   * @param {number} [damage=20] - Amount of energy to subtract.
+   * @returns {void}
+   */
+  hit(damage = 20) {
+    super.hit();
+    if (this.world && this.world.statusBarEndboss) {
+      this.world.statusBarEndboss.setPercentage(this.energy);
+    }
+    this.energy = Math.max(this.energy - damage, 0);
+    if (this.energy === 0) {
+      this.die();
+    }
+  }
+
+  /**
+   * Handles the death of the endboss and removes it from the world.
+   * @returns {void}
+   */
+  die() {
+    if (this.animationInterval) {
+      clearInterval(this.animationInterval);
+    }
+    this.dead = true;
+    if (this.world && this.world.level && this.world.level.enemies) {
+      const index = this.world.level.enemies.indexOf(this);
+      if (index > -1) {
+        this.world.level.enemies.splice(index, 1);
+      }
+    }
   }
 }

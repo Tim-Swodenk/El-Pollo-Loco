@@ -53,14 +53,14 @@ class MovableObject extends DrawableObject {
 
   /**
    * Determines if the character's bottom edge hits the enemy's top edge while falling.
-   * * Adds a 20px downward margin to enlarge the stomp hitbox.
+   * * Adds a 30px downward margin to enlarge the stomp hitbox.
    * @param {MovableObject} char - The character object.
    * @param {MovableObject} enemy - The enemy to test against.
    * @returns {boolean} True if the character stomps the enemy.
    */
   static isTopBottomCollision(char, enemy) {
     let charBottom = char.y + char.height - char.offset.bottom;
-    let enemyStompTop = enemy.y + enemy.offset.top - 20;
+    let enemyStompTop = enemy.y + enemy.offset.top - 30;
 
     let overlapsX =
       char.x + char.width - char.offset.right > enemy.x + enemy.offset.left &&
@@ -71,10 +71,11 @@ class MovableObject extends DrawableObject {
 
   /**
    * Reduces energy when hit and records the time of the hit.
+   *  @param {number} [damage=5] - Amount of energy to subtract.
    * @returns {void}
    */
-  hit() {
-    this.energy -= 5;
+  hit(damage = 5) {
+    this.energy -= damage;
     if (this.energy < 0) {
       this.energy = 0;
     } else {

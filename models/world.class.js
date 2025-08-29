@@ -11,12 +11,14 @@ class World {
   statusBar = new StatusBar();
   statusBarBottles = new StatusBarBottles();
   statusBarCoins = new StatusBarCoins();
+  statusBarEndboss = new StatusBarEndboss();
   throwableObjects = [];
   lastCameraX = 0;
   collectedBottles = 0;
   maxBottles = 5;
   collectedCoins = 0;
   maxCoins = 5;
+  endboss = this.level.enemies.find((enemy) => enemy instanceof Endboss);
 
   /**
    * Creates the game world.
@@ -83,6 +85,7 @@ class World {
       this.checkCollisionsBottle();
       this.checkCollisionsCoins();
       this.checkThrowObjects();
+      this.checkBottleHitsEndboss();
     }, 200);
   }
 
@@ -164,6 +167,30 @@ class World {
   }
 
   /**
+   * Checks collisions between thrown bottles and the endboss.
+   * @returns {void}
+   */
+  checkBottleHitsEndboss() {
+    const endboss = this.level.enemies.find(
+      (enemy) => enemy instanceof Endboss
+    );
+    if (!endboss || endboss.dead) {
+      return;
+    }
+    this.throwableObjects.forEach((bottle) => {
+      if (!bottle.hasSplashed && bottle.isColliding(endboss)) {
+        bottle.hasSplashed = true;
+        clearInterval(bottle.animationInterval);
+        clearInterval(bottle.throwInterval);
+        clearInterval(bottle.gravityInterval);
+        bottle.playSplashAnimationOnce();
+        endboss.hit();
+        this.statusBar.setPercentage(endboss.energy);
+      }
+    });
+  }
+
+  /**
    * Clears the canvas and draws all game objects.
    * @returns {void}
    */
@@ -177,6 +204,13 @@ class World {
     this.addToMap(this.statusBar);
     this.addToMap(this.statusBarBottles);
     this.addToMap(this.statusBarCoins);
+    if (
+      this.endboss &&
+      this.endboss.x + this.camera_x >= 0 &&
+      this.endboss.x + this.camera_x <= this.canvas.width
+    ) {
+      this.addToMap(this.statusBarEndboss);
+    }
     this.ctx.translate(this.camera_x, 0); //Forward
 
     this.addToMap(this.character);
