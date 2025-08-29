@@ -78,9 +78,12 @@ class World {
    */
   run() {
     setInterval(() => {
-      this.checkCollisions();
+      this.checkCollisionsCharacter();
+      this.checkCollisionsStomping();
+      this.checkCollisionsBottle();
+      this.checkCollisionsCoins();
       this.checkThrowObjects();
-    }, 200);
+    }, 100);
   }
 
   /**
@@ -102,36 +105,32 @@ class World {
   }
 
   /**
-   * Determines if the character's bottom edge hits the enemy's top edge while falling.
-   * @param {MovableObject} char - The character object.
-   * @param {MovableObject} enemy - The enemy to test against.
-   * @returns {boolean} True if the character stomps the enemy.
-   */
-  isTopBottomCollision(char, enemy) {
-    let charBottom = char.y - 1000;
-    let enemyTop = enemy.y + enemy.height;
-    let overlapsX =
-      char.x + char.width - char.offset.right > enemy.x + enemy.offset.left &&
-      char.x + char.offset.left < enemy.x + enemy.width - enemy.offset.right;
-
-    return overlapsX && charBottom <= enemyTop && char.speedY < 0;
-  }
-
-  /**
    * Checks collisions between the character and other objects.
    * @returns {void}
    */
-  checkCollisions() {
+  checkCollisionsCharacter() {
     this.level.enemies.forEach((enemy) => {
-      if (!enemy.dead) {
-        if (this.isTopBottomCollision(this.character, enemy)) {
-          enemy.die();
-        } else if (this.character.isColliding(enemy)) {
-          this.character.hit();
-          this.statusBar.setPercentage(this.character.energy);
-        }
+      if (!enemy.dead && this.character.isColliding(enemy)) {
+        this.character.hit();
+        this.statusBar.setPercentage(this.character.energy);
       }
     });
+  }
+
+  checkCollisionsStomping() {
+    this.level.enemies
+      .filter((enemy) => enemy instanceof Chicken)
+      .forEach((enemy) => {
+        if (
+          !enemy.dead &&
+          MovableObject.isTopBottomCollision(this.character, enemy)
+        ) {
+          enemy.die();
+        }
+      });
+  }
+
+  checkCollisionsBottle() {
     this.level.collectableObjects.forEach((obj) => {
       if (
         this.character.isColliding(obj) &&
@@ -143,6 +142,9 @@ class World {
         this.statusBarBottles.setPercentage(perc);
       }
     });
+  }
+
+  checkCollisionsCoins() {
     this.level.coinObjects.forEach((obj) => {
       if (this.character.isColliding(obj)) {
         obj.collect();
