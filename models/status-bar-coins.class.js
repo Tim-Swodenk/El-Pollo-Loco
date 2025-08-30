@@ -18,7 +18,7 @@ class StatusBarCoins extends StatusBar {
         "assets/img/7_statusbars/1_statusbar/1_statusbar_coin/green/100.png",
       ],
       0,
-      100
+      80
     );
   }
 }
