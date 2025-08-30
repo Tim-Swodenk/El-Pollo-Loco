@@ -16,15 +16,17 @@ class Cloud extends MovableObject {
     "assets/img/5_background/layers/4_clouds/2.png",
   ];
 
-  nextImageIndex = 0;
+  static nextImageIndex = 0;
 
   /**
-   * Creates a cloud at a random horizontal position.
+   Creates a cloud at a fixed horizontal position.
+   * @param {number} x - Horizontal position for the cloud.
    */
-  constructor() {
-    super().loadImage(this.IMAGES_CLOUDS[this.nextImageIndex]);
-    this.nextImageIndex = (this.nextImageIndex + 1) % this.IMAGES_CLOUDS.length;
-    this.x = Math.random() * 500; //zahl zwischen 200 und 700
+  constructor(x = 0) {
+    super().loadImage(this.IMAGES_CLOUDS[Cloud.nextImageIndex]);
+    Cloud.nextImageIndex =
+      (Cloud.nextImageIndex + 1) % this.IMAGES_CLOUDS.length;
+    this.x = x;
     this.animate();
   }
 
@@ -35,6 +37,6 @@ class Cloud extends MovableObject {
   animate() {
     setInterval(() => {
       this.moveLeft();
-    }, 1000 / 25);
+    }, 1000 / 400); // 25
   }
 }

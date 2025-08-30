@@ -8,6 +8,7 @@ class World {
   ctx;
   keyboard;
   camera_x = 0;
+  nextCloudSpawnX = 0;
   statusBarHealth = new StatusBarHealth();
   statusBarBottles = new StatusBarBottles();
   statusBarCoins = new StatusBarCoins();
@@ -80,18 +81,16 @@ class World {
    * @returns {void}
    */
   startCloudSpawner() {
+    this.nextCloudSpawnX = this.canvas.width;
     setInterval(() => {
-      this.level.clouds = this.level.clouds.filter(
-        (c) => c.x + c.width >= -this.camera_x
-      );
+      this.level.clouds = this.level.clouds.filter((c) => c.x + c.width >= 0);
 
-      let spawnX = -this.camera_x + this.canvas.width + Math.random() * 200;
-      let cloud = new Cloud();
-      cloud.x = spawnX;
-      cloud.world = this;
+      let cloud = new Cloud(this.nextCloudSpawnX);
       this.level.clouds.push(cloud);
+      this.nextCloudSpawnX += cloud.width;
     }, 3000);
   }
+
   /**
    * Starts the main game loop checking collisions and throws.
    * @returns {void}
