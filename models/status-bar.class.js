@@ -36,6 +36,8 @@ class StatusBar extends DrawableObject {
    * @returns {number} Index of the image to display.
    */
   resolveImageIndex() {
-    return Math.max(0, Math.min(5, Math.floor(this.percentage / 20)));
+    let steps = this.IMAGES.length - 1;
+    let stepSize = 100 / steps;
+    return Math.max(0, Math.min(steps, Math.round(this.percentage / stepSize)));
   }
 }

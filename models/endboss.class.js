@@ -42,20 +42,15 @@ class Endboss extends MovableObject {
   }
 
   /**
-   * Reduces energy by the given damage and checks for death and updates the endboss status bar when hit.
+   * Reduces energy by the given damage and checks for death.
    * @param {number} [damage=20] - Amount of energy to subtract.
    * @returns {void}
    */
   hit(damage = 20) {
-    super.hit();
-    if (this.world && this.world.statusBarEndboss) {
-      this.world.statusBarEndboss.setPercentage(this.energy);
-    }
-    this.energy = Math.max(this.energy - damage, 0);
+    super.hit(damage);
     if (this.energy === 0) {
       this.die();
     }
-    console.log(this.energy);
   }
 
   /**

@@ -74,7 +74,7 @@ class MovableObject extends DrawableObject {
    *  @param {number} [damage=5] - Amount of energy to subtract.
    * @returns {void}
    */
-  hit(damage = 5) {
+  hit(damage = 20) {
     this.energy -= damage;
     if (this.energy < 0) {
       this.energy = 0;
