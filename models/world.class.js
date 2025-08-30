@@ -33,6 +33,7 @@ class World {
     this.setWorld();
     this.run();
     this.startChickenSpawner();
+    this.startCloudSpawner();
   }
 
   /**
@@ -74,6 +75,23 @@ class World {
     this.totalBottles = this.level.collectableObjects.length;
   }
 
+  /**
+   * Periodically removes off-screen clouds and spawns new ones to the right.
+   * @returns {void}
+   */
+  startCloudSpawner() {
+    setInterval(() => {
+      this.level.clouds = this.level.clouds.filter(
+        (c) => c.x + c.width >= -this.camera_x
+      );
+
+      let spawnX = -this.camera_x + this.canvas.width + Math.random() * 200;
+      let cloud = new Cloud();
+      cloud.x = spawnX;
+      cloud.world = this;
+      this.level.clouds.push(cloud);
+    }, 3000);
+  }
   /**
    * Starts the main game loop checking collisions and throws.
    * @returns {void}
