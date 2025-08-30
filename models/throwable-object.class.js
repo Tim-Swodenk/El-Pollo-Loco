@@ -125,7 +125,7 @@ class ThrowableObject extends MovableObject {
   removeFromWorld() {
     setTimeout(() => {
       if (this.world && this.world.throwableObjects) {
-        const index = this.world.throwableObjects.indexOf(this);
+        let index = this.world.throwableObjects.indexOf(this);
         if (index > -1) {
           this.world.throwableObjects.splice(index, 1);
         }

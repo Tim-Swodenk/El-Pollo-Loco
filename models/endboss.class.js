@@ -55,6 +55,7 @@ class Endboss extends MovableObject {
     if (this.energy === 0) {
       this.die();
     }
+    console.log(this.energy);
   }
 
   /**
@@ -67,7 +68,7 @@ class Endboss extends MovableObject {
     }
     this.dead = true;
     if (this.world && this.world.level && this.world.level.enemies) {
-      const index = this.world.level.enemies.indexOf(this);
+      let index = this.world.level.enemies.indexOf(this);
       if (index > -1) {
         this.world.level.enemies.splice(index, 1);
       }

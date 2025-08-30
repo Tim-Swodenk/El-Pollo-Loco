@@ -122,6 +122,10 @@ class World {
     });
   }
 
+  /**
+   * Detects and resolves collisions when the character stomps chickens.
+   * @returns {void}
+   */
   checkCollisionsStomping() {
     this.level.enemies
       .filter((enemy) => enemy instanceof Chicken)
@@ -135,6 +139,10 @@ class World {
       });
   }
 
+  /**
+   * Handles collisions between the character and collectible bottles.
+   * @returns {void}
+   */
   checkCollisionsBottle() {
     this.level.collectableObjects.forEach((obj) => {
       if (
@@ -149,6 +157,10 @@ class World {
     });
   }
 
+  /**
+   * Handles collisions between the character and collectible coins.
+   * @returns {void}
+   */
   checkCollisionsCoins() {
     this.level.coinObjects.forEach((obj) => {
       if (this.character.isColliding(obj)) {
@@ -171,9 +183,7 @@ class World {
    * @returns {void}
    */
   checkBottleHitsEndboss() {
-    const endboss = this.level.enemies.find(
-      (enemy) => enemy instanceof Endboss
-    );
+    let endboss = this.level.enemies.find((enemy) => enemy instanceof Endboss);
     if (!endboss || endboss.dead) {
       return;
     }
