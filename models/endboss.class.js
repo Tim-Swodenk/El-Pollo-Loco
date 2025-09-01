@@ -105,26 +105,14 @@ class Endboss extends MovableObject {
   animate() {
     this.animationInterval = setInterval(() => {
       switch (this.currentState) {
-        case "walkForward":
-          this.walkForward();
-          break;
-        case "walkBackward":
-          this.walkBackward();
-          break;
-        case "jumpAttack":
-          this.jumpAttack();
-          break;
-        case "attack":
-          this.attack();
+        case "alert":
+          this.playAnimation(this.IMAGES_ALERT);
           break;
         case "hurt":
-          this.hurt();
+          this.playAnimation(this.IMAGES_HURT);
           break;
         case "dead":
           this.playAnimation(this.IMAGES_DEAD);
-          break;
-        default:
-          this.alert();
           break;
       }
     }, this.ANIMATION_INTERVAL);
@@ -168,26 +156,60 @@ class Endboss extends MovableObject {
       this.isPlayingSequence = true;
       await this.playSequence(sequence);
       this.isPlayingSequence = false;
+      this.currentState = "alert";
     }, 5000);
   }
 
-  /** * Moves right while playing the walking animation.
-   * @returns {void}
+  /**
+   * Moves a defined distance in the given direction.
+   * @param {number} px - Distance in pixels.
+   * @param {"left"|"right"} direction - Direction to move.
+   * @returns {Promise<void>} Resolves when movement is complete.
    */
-  walkForward() {
-    this.currentState = "walkForward";
-    this.moveLeft();
-    this.playAnimation(this.IMAGES_WALK);
+  moveDistance(px, direction) {
+    return new Promise((resolve) => {
+      let moved = 0;
+      const interval = setInterval(() => {
+        if (direction === "left") {
+          this.moveLeft();
+        } else {
+          this.moveRight();
+        }
+        moved += this.speed;
+        if (moved >= px) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 1000 / 60);
+    });
   }
 
   /**
-   * Moves left while playing the walking animation.
-   * @returns {void}
+   * Moves toward the character and back to the original position.
+   * @returns {Promise<void>}
    */
-  walkBackward() {
+  async walkForward() {
+    this.currentState = "walkForward";
+    const animationLoop = setInterval(
+      () => this.playAnimation(this.IMAGES_WALK),
+      this.ANIMATION_INTERVAL
+    );
+    await this.moveDistance(500, "left");
+    clearInterval(animationLoop);
+  }
+
+  /**
+   * Returns to the original position after approaching the player.
+   * @returns {Promise<void>}
+   */
+  async walkBackward() {
     this.currentState = "walkBackward";
-    this.moveRight();
-    this.playAnimation(this.IMAGES_WALK);
+    const animationLoop = setInterval(
+      () => this.playAnimation(this.IMAGES_WALK),
+      this.ANIMATION_INTERVAL
+    );
+    await this.moveDistance(500, "right");
+    clearInterval(animationLoop);
   }
 
   /**
@@ -200,31 +222,45 @@ class Endboss extends MovableObject {
   }
 
   /**
-   * Plays the attack animation.
-   * @returns {void}
+   * Executes a basic attack toward the character and retreats.
+   * @returns {Promise<void>}
    */
-  attack() {
+  async attack() {
     this.currentState = "attack";
-    this.playAnimation(this.IMAGES_ATTACK);
+    const animationLoop = setInterval(
+      () => this.playAnimation(this.IMAGES_ATTACK),
+      this.ANIMATION_INTERVAL
+    );
+    let direction = "left";
+    if (this.world && this.world.character && this.world.character.x > this.x) {
+      direction = "right";
+    }
+    await this.moveDistance(100, direction);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    let opposite = direction === "left" ? "right" : "left";
+    await this.moveDistance(100, opposite);
+    clearInterval(animationLoop);
   }
 
   /**
    * Performs a jumping attack moving toward the character.
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  jumpAttack() {
+  async jumpAttack() {
     this.currentState = "jumpAttack";
+    const animationLoop = setInterval(
+      () => this.playAnimation(this.IMAGES_ATTACK),
+      this.ANIMATION_INTERVAL
+    );
     if (!this.isAboveGround()) {
       this.jump();
     }
-    if (this.world && this.world.character) {
-      if (this.world.character.x > this.x) {
-        this.moveRight();
-      } else {
-        this.moveLeft();
-      }
+    let direction = "left";
+    if (this.world && this.world.character && this.world.character.x > this.x) {
+      direction = "right";
     }
-    this.playAnimation(this.IMAGES_ATTACK);
+    await this.moveDistance(300, direction);
+    clearInterval(animationLoop);
   }
 
   /**
