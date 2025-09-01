@@ -81,14 +81,21 @@ class World {
    * @returns {void}
    */
   startCloudSpawner() {
-    this.nextCloudSpawnX = this.canvas.width;
+    this.nextCloudSpawnX = 0;
+
+    for (let i = 0; i < 5; i++) {
+      const cloud = new Cloud(this.nextCloudSpawnX);
+      this.level.clouds.push(cloud);
+      this.nextCloudSpawnX += cloud.width;
+    }
+
     setInterval(() => {
       this.level.clouds = this.level.clouds.filter((c) => c.x + c.width >= 0);
 
       let cloud = new Cloud(this.nextCloudSpawnX);
       this.level.clouds.push(cloud);
       this.nextCloudSpawnX += cloud.width;
-    }, 3000);
+    }, 30000);
   }
 
   /**
