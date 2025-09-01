@@ -27,6 +27,9 @@ class Endboss extends MovableObject {
   /** Holds the interval ID for the random behavior loop. */
   behaviorInterval;
 
+  /** Indicates whether the endboss is currently hurt. */
+  isHurt = false;
+
   IMAGES_WALK = [
     "assets/img/4_enemie_boss_chicken/1_walk/G1.png",
     "assets/img/4_enemie_boss_chicken/1_walk/G2.png",
@@ -86,6 +89,15 @@ class Endboss extends MovableObject {
   }
 
   /**
+   * Checks whether the end boss is above ground level.
+   * Overrides {@link MovableObject#isAboveGround} to use a custom ground height.
+   * @returns {boolean} True if the boss has not yet reached the ground.
+   */
+  isAboveGround() {
+    return this.y < 60;
+  }
+
+  /**
    * Runs the state machine to control movement and animations.
    * @returns {void}
    */
@@ -125,8 +137,14 @@ class Endboss extends MovableObject {
   async playSequence(sequence) {
     for (const action of sequence) {
       if (typeof this[action] === "function") {
+        if (this.isHurt) {
+          break;
+        }
         this[action]();
         await new Promise((resolve) => setTimeout(resolve, 1000));
+        if (this.isHurt) {
+          break;
+        }
       }
     }
   }
@@ -137,7 +155,7 @@ class Endboss extends MovableObject {
    */
   startRandomBehavior() {
     this.behaviorInterval = setInterval(async () => {
-      if (this.isPlayingSequence) {
+      if (this.isPlayingSequence || this.isHurt) {
         return;
       }
       const sequence =
@@ -210,7 +228,11 @@ class Endboss extends MovableObject {
    */
   hurt() {
     this.currentState = "hurt";
+    this.isHurt = true;
     this.playAnimation(this.IMAGES_HURT);
+    setTimeout(() => {
+      this.isHurt = false;
+    }, 2000);
   }
 
   /**
