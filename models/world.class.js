@@ -83,7 +83,7 @@ class World {
   startCloudSpawner() {
     this.nextCloudSpawnX = 0;
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {
       const cloud = new Cloud(this.nextCloudSpawnX);
       this.level.clouds.push(cloud);
       this.nextCloudSpawnX += cloud.width;
@@ -95,7 +95,7 @@ class World {
       let cloud = new Cloud(this.nextCloudSpawnX);
       this.level.clouds.push(cloud);
       this.nextCloudSpawnX += cloud.width;
-    }, 30000);
+    }, 60000);
   }
 
   /**
