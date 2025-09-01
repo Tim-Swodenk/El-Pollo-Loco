@@ -18,6 +18,7 @@ class Endboss extends MovableObject {
     ["walkForward", "alert", "attack", "walkBackward"],
     ["alert", "attack", "walkBackward"],
     ["walkBackward", "alert", "walkForward"],
+    ["alert", "jumpAttack", "walkBackward"],
   ];
 
   /** Indicates whether a sequence is currently running. */
@@ -79,6 +80,7 @@ class Endboss extends MovableObject {
     this.loadImages(this.IMAGES_DEAD);
     this.x = 2550;
     this.offset = { top: 80, right: 5, bottom: 5, left: 25 };
+    this.applyGravity();
     this.animate();
     this.startRandomBehavior();
   }
@@ -95,6 +97,9 @@ class Endboss extends MovableObject {
           break;
         case "walkBackward":
           this.walkBackward();
+          break;
+        case "jumpAttack":
+          this.jumpAttack();
           break;
         case "attack":
           this.attack();
@@ -177,6 +182,25 @@ class Endboss extends MovableObject {
    */
   attack() {
     this.currentState = "attack";
+    this.playAnimation(this.IMAGES_ATTACK);
+  }
+
+  /**
+   * Performs a jumping attack moving toward the character.
+   * @returns {void}
+   */
+  jumpAttack() {
+    this.currentState = "jumpAttack";
+    if (!this.isAboveGround()) {
+      this.jump();
+    }
+    if (this.world && this.world.character) {
+      if (this.world.character.x > this.x) {
+        this.moveRight();
+      } else {
+        this.moveLeft();
+      }
+    }
     this.playAnimation(this.IMAGES_ATTACK);
   }
 
