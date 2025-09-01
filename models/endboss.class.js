@@ -10,6 +10,22 @@ class Endboss extends MovableObject {
   animationInterval;
   currentState = "walkForward";
 
+  /**
+   * Predefined behavior sequences consisting of endboss action names.
+   * @type {string[][]}
+   */
+  SEQUENCES = [
+    ["walkForward", "alert", "attack", "walkBackward"],
+    ["alert", "attack", "walkBackward"],
+    ["walkBackward", "alert", "walkForward"],
+  ];
+
+  /** Indicates whether a sequence is currently running. */
+  isPlayingSequence = false;
+
+  /** Holds the interval ID for the random behavior loop. */
+  behaviorInterval;
+
   IMAGES_WALK = [
     "assets/img/4_enemie_boss_chicken/1_walk/G1.png",
     "assets/img/4_enemie_boss_chicken/1_walk/G2.png",
@@ -64,6 +80,7 @@ class Endboss extends MovableObject {
     this.x = 2550;
     this.offset = { top: 80, right: 5, bottom: 5, left: 25 };
     this.animate();
+    this.startRandomBehavior();
   }
 
   /**
@@ -93,6 +110,37 @@ class Endboss extends MovableObject {
           break;
       }
     }, 200);
+  }
+
+  /**
+   * Plays a given sequence of actions sequentially.
+   * @param {string[]} sequence - Array of method names to execute.
+   * @returns {Promise<void>}
+   */
+  async playSequence(sequence) {
+    for (const action of sequence) {
+      if (typeof this[action] === "function") {
+        this[action]();
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+  }
+
+  /**
+   * Periodically selects and plays random behavior sequences.
+   * @returns {void}
+   */
+  startRandomBehavior() {
+    this.behaviorInterval = setInterval(async () => {
+      if (this.isPlayingSequence) {
+        return;
+      }
+      const sequence =
+        this.SEQUENCES[Math.floor(Math.random() * this.SEQUENCES.length)];
+      this.isPlayingSequence = true;
+      await this.playSequence(sequence);
+      this.isPlayingSequence = false;
+    }, 5000);
   }
 
   /** * Moves right while playing the walking animation.
