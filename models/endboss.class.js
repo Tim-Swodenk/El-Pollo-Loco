@@ -7,6 +7,7 @@ class Endboss extends MovableObject {
   width = 250;
   y = 60;
   energy = 100;
+  ANIMATION_INTERVAL = 200;
   animationInterval;
   currentState = "walkForward";
 
@@ -126,7 +127,7 @@ class Endboss extends MovableObject {
           this.alert();
           break;
       }
-    }, 200);
+    }, this.ANIMATION_INTERVAL);
   }
 
   /**
@@ -135,13 +136,17 @@ class Endboss extends MovableObject {
    * @returns {Promise<void>}
    */
   async playSequence(sequence) {
-    for (const action of sequence) {
+    for (let action of sequence) {
       if (typeof this[action] === "function") {
         if (this.isHurt) {
           break;
         }
-        this[action]();
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        let result = this[action]();
+        if (result instanceof Promise) {
+          await result;
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
         if (this.isHurt) {
           break;
         }
@@ -158,7 +163,7 @@ class Endboss extends MovableObject {
       if (this.isPlayingSequence || this.isHurt) {
         return;
       }
-      const sequence =
+      let sequence =
         this.SEQUENCES[Math.floor(Math.random() * this.SEQUENCES.length)];
       this.isPlayingSequence = true;
       await this.playSequence(sequence);
@@ -171,7 +176,7 @@ class Endboss extends MovableObject {
    */
   walkForward() {
     this.currentState = "walkForward";
-    this.moveRight();
+    this.moveLeft();
     this.playAnimation(this.IMAGES_WALK);
   }
 
@@ -181,7 +186,7 @@ class Endboss extends MovableObject {
    */
   walkBackward() {
     this.currentState = "walkBackward";
-    this.moveLeft();
+    this.moveRight();
     this.playAnimation(this.IMAGES_WALK);
   }
 
@@ -228,11 +233,11 @@ class Endboss extends MovableObject {
    */
   hurt() {
     this.currentState = "hurt";
-    this.isHurt = true;
     this.playAnimation(this.IMAGES_HURT);
     setTimeout(() => {
       this.isHurt = false;
-    }, 2000);
+      this.currentState = "alert";
+    }, this.IMAGES_HURT.length * 200);
   }
 
   /**
@@ -266,6 +271,6 @@ class Endboss extends MovableObject {
           this.world.level.enemies.splice(index, 1);
         }
       }
-    }, this.IMAGES_DEAD.length * 200);
+    }, this.IMAGES_DEAD.length * this.ANIMATION_INTERVAL);
   }
 }
