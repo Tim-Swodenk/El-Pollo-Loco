@@ -178,6 +178,7 @@ class Endboss extends MovableObject {
     this.currentState = "walkForward";
     this.moveLeft();
     this.playAnimation(this.IMAGES_WALK);
+    console.log("lauf vorwärts");
   }
 
   /**
@@ -188,6 +189,7 @@ class Endboss extends MovableObject {
     this.currentState = "walkBackward";
     this.moveRight();
     this.playAnimation(this.IMAGES_WALK);
+    console.log("lauf rückwärts");
   }
 
   /**
@@ -197,6 +199,7 @@ class Endboss extends MovableObject {
   alert() {
     this.currentState = "alert";
     this.playAnimation(this.IMAGES_ALERT);
+    console.log("achtung");
   }
 
   /**
@@ -206,6 +209,7 @@ class Endboss extends MovableObject {
   attack() {
     this.currentState = "attack";
     this.playAnimation(this.IMAGES_ATTACK);
+    console.log("angriff");
   }
 
   /**
@@ -214,6 +218,8 @@ class Endboss extends MovableObject {
    */
   jumpAttack() {
     this.currentState = "jumpAttack";
+    console.log("sprung angriff");
+
     if (!this.isAboveGround()) {
       this.jump();
     }
