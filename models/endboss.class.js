@@ -7,9 +7,14 @@ class Endboss extends MovableObject {
   width = 250;
   y = 60;
   energy = 100;
+  speed = 15;
 
-  animationIntervalMs = 250;
+  animationIntervalMs = 150;
   animationIntervalId;
+
+  isPlayingSequence = false;
+  behaviorInterval;
+  isHurt = false;
 
   currentState = "wait";
 
@@ -19,7 +24,7 @@ class Endboss extends MovableObject {
    */
   SEQUENCES = [
     ["walkForward", "alert", "walkBackward"],
-    /**["wait", "alert", "attack", "walkBackward"],
+    /**["alert", "attack", "walkBackward"],
     ["wait", "walkForward", "walkBackward", "attack", "walkBackward"],
     ["wait", "alert", "jumpAttack", "walkBackward"],
     [
@@ -31,15 +36,6 @@ class Endboss extends MovableObject {
       "walkBackward",
     ],*/
   ];
-
-  /** Indicates whether a sequence is currently running. */
-  isPlayingSequence = false;
-
-  /** Holds the interval ID for the random behavior loop. */
-  behaviorInterval;
-
-  /** Indicates whether the endboss is currently hurt. */
-  isHurt = false;
 
   /**
    * Default distances (in px) for endboss actions. Adjust to tweak behavior.
@@ -130,19 +126,10 @@ class Endboss extends MovableObject {
     this.startRandomBehavior();
   }
 
-  /**
-   * Checks whether the end boss is above ground level.
-   * Overrides {@link MovableObject#isAboveGround} to use a custom ground height.
-   * @returns {boolean} True if the boss has not yet reached the ground.
-   */
   isAboveGround() {
     return this.y < 60;
   }
 
-  /**
-   * Runs the state machine to control movement and animations.
-   * @returns {void}
-   */
   animate() {
     this.animationIntervalId = setInterval(() => {
       switch (this.currentState) {
@@ -197,13 +184,16 @@ class Endboss extends MovableObject {
         }
       }
     }
+    // ensure endboss returns to idle state after sequence
+    this.currentState = "wait";
+    this.playAnimation(this.IMAGES_WAIT);
   }
 
   /**
    * Periodically selects and plays random behavior sequences.
    * @returns {void}
    */
-  startRandomBehavior() {
+  startRandomBehavior(playOnce = false) {
     this.behaviorInterval = setInterval(async () => {
       if (this.isPlayingSequence || this.isHurt) {
         return;
@@ -220,19 +210,20 @@ class Endboss extends MovableObject {
     console.log("warten");
     this.currentState = "wait";
     this.playAnimation(this.IMAGES_WAIT);
-    return new Promise((resolve) => setTimeout(resolve, 1500));
   }
 
   walkForward() {
     console.log("vorwärts");
     this.currentState = "walkForward";
     this.playAnimation(this.IMAGES_WALK);
+    this.moveLeft();
   }
 
   walkBackward() {
     console.log("rückwärts");
     this.currentState = "walkBackward";
     this.playAnimation(this.IMAGES_WALK);
+    this.moveRight();
   }
 
   alert() {
