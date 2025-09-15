@@ -7,19 +7,27 @@ class Endboss extends MovableObject {
   width = 250;
   y = 60;
   energy = 100;
+
   ANIMATION_INTERVAL = 200;
   animationInterval;
   currentState = "walkForward";
+
+  /** Index of the next step in {@link jumpPath}. */
+  jumpPathIndex = 0;
+
+  /** Determines whether the jump path repeats after completion. */
+  repeatJumpPath = true;
 
   /**
    * Predefined behavior sequences consisting of endboss action names.
    * @type {string[][]}
    */
   SEQUENCES = [
-    ["walkForward", "alert", "attack", "walkBackward"],
-    ["alert", "attack", "walkBackward"],
-    ["walkBackward", "alert", "walkForward"],
-    ["alert", "jumpAttack", "walkBackward"],
+    //["walkForward", "alert", "attack", "walkBackward"],
+    //["alert", "attack", "walkBackward"],
+    //["walkBackward", "alert", "walkForward"],
+    //["alert", "jumpAttack", "walkBackward"],
+    ["jumpAttack", "alert", "jumpAttack"],
   ];
 
   /** Indicates whether a sequence is currently running. */
@@ -58,6 +66,12 @@ class Endboss extends MovableObject {
     "assets/img/4_enemie_boss_chicken/3_attack/G18.png",
     "assets/img/4_enemie_boss_chicken/3_attack/G19.png",
     "assets/img/4_enemie_boss_chicken/3_attack/G20.png",
+  ];
+
+  IMAGES_JUMPATTACK = [
+    "assets/img/4_enemie_boss_chicken/3_attack/G17.png",
+    "assets/img/4_enemie_boss_chicken/3_attack/G18.png",
+    "assets/img/4_enemie_boss_chicken/3_attack/G19.png",
   ];
 
   IMAGES_HURT = [
@@ -222,15 +236,9 @@ class Endboss extends MovableObject {
 
     if (!this.isAboveGround()) {
       this.jump();
+      this.speedY = 25;
     }
-    if (this.world && this.world.character) {
-      if (this.world.character.x > this.x) {
-        this.moveRight();
-      } else {
-        this.moveLeft();
-      }
-    }
-    this.playAnimation(this.IMAGES_ATTACK);
+    this.playAnimation(this.IMAGES_JUMPATTACK);
   }
 
   /**
