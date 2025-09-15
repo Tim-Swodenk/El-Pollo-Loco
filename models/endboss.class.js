@@ -13,19 +13,13 @@ class Endboss extends MovableObject {
 
   currentState = "wait";
 
-  /** Index of the next step in {@link jumpPath}. */
-  jumpPathIndex = 0;
-
-  /** Determines whether the jump path repeats after completion. */
-  repeatJumpPath = true;
-
   /**
    * Predefined behavior sequences consisting of endboss action names.
    * @type {string[][]}
    */
   SEQUENCES = [
     ["wait", "walkForward", "alert", "walkBackward"],
-    ["wait", "alert", "attack", "walkBackward"],
+    /**["wait", "alert", "attack", "walkBackward"],
     ["wait", "walkForward", "walkBackward", "attack", "walkBackward"],
     ["wait", "alert", "jumpAttack", "walkBackward"],
     [
@@ -35,7 +29,7 @@ class Endboss extends MovableObject {
       "walkBackward",
       "jumpAttack",
       "walkBackward",
-    ],
+    ],*/
   ];
 
   /** Indicates whether a sequence is currently running. */
@@ -50,6 +44,7 @@ class Endboss extends MovableObject {
   /**
    * Default distances (in px) for endboss actions. Adjust to tweak behavior.
    */
+
   walkForwardDistance = 200;
   walkBackwardDistance = 200;
   attackDistance = 100;
@@ -120,7 +115,7 @@ class Endboss extends MovableObject {
     this.loadImages(this.IMAGES_JUMPATTACK);
     this.loadImages(this.IMAGES_HURT);
     this.loadImages(this.IMAGES_DEAD);
-    this.x = 550; //2550
+    this.x = 500; //2550
     this.offset = { top: 80, right: 5, bottom: 5, left: 25 };
     this.applyGravity();
     this.animate();
@@ -213,81 +208,51 @@ class Endboss extends MovableObject {
   }
 
   wait() {
+    console.log("warten");
     this.currentState = "wait";
     this.playAnimation(this.IMAGES_WAIT);
-    console.log("warten");
     return new Promise((resolve) => setTimeout(resolve, 1500));
   }
 
-  /**
-   * Moves left for {@link walkForwardDistance} pixels.
-   * Resolves once the distance is covered.
-   * @returns {Promise<void>}
-   */
   walkForward() {
     console.log("vorwärts");
     this.currentState = "walkForward";
+    this.playAnimation(this.IMAGES_WALK);
   }
 
-  /**
-    * Moves right for {@link walkBackwardDistance} pixels.
-   * Resolves once the distance is covered.
-   * @returns {Promise<void>}
-
-   */
   walkBackward() {
     console.log("rückwärts");
     this.currentState = "walkBackward";
+    this.playAnimation(this.IMAGES_WALK);
   }
 
-  /**
-   * Plays the alert animation.
-   * @returns {void}
-   */
   alert() {
     console.log("achtung");
     this.currentState = "alert";
     this.playAnimation(this.IMAGES_ALERT);
   }
 
-  /**
-   * Approaches the character until within {@link attackDistance}.
-   * Then plays the attack animation once and resolves.
-   * @returns {Promise<void>}
-   */
   attack() {
     console.log("angriff");
     this.currentState = "attack";
+    this.playAnimation(this.IMAGES_ATTACK);
   }
 
-  /**
-  Jumps and moves toward the character for
-   * {@link jumpAttackDistance} pixels.
-   * @returns {Promise<void>}
-   */
   jumpAttack() {
     console.log("angrif jump");
     this.currentState = "jumpAttack";
+    this.playAnimation(this.IMAGES_JUMPATTACK);
   }
 
-  /**
-   * Plays the hurt animation.
-   * @returns {void}
-   */
   hurt() {
     this.currentState = "hurt";
     this.playAnimation(this.IMAGES_HURT);
     setTimeout(() => {
       this.isHurt = false;
-      this.currentState = "alert";
+      this.currentState = "wait";
     }, this.IMAGES_HURT.length * this.animationIntervalMs);
   }
 
-  /**
-   * Reduces energy by the given damage and triggers animations.
-   * @param {number} [damage=20] - Amount of energy to subtract.
-   * @returns {void}
-   */
   hit(damage = 20) {
     super.hit(damage);
     if (this.energy > 0) {
