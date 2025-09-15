@@ -8,7 +8,7 @@ class Endboss extends MovableObject {
   y = 60;
   energy = 100;
 
-  animationIntervalMs = 350;
+  animationIntervalMs = 250;
   animationIntervalId;
 
   currentState = "wait";
@@ -18,7 +18,7 @@ class Endboss extends MovableObject {
    * @type {string[][]}
    */
   SEQUENCES = [
-    ["wait", "walkForward", "alert", "walkBackward"],
+    ["walkForward", "alert", "walkBackward"],
     /**["wait", "alert", "attack", "walkBackward"],
     ["wait", "walkForward", "walkBackward", "attack", "walkBackward"],
     ["wait", "alert", "jumpAttack", "walkBackward"],
@@ -49,6 +49,14 @@ class Endboss extends MovableObject {
   walkBackwardDistance = 200;
   attackDistance = 100;
   jumpAttackDistance = 200;
+
+  ACTION_DELAYS = {
+    walkForward: 3000,
+    walkBackward: 3000,
+    alert: 1500,
+    attack: 2000,
+    jumpAttack: 3000,
+  };
 
   IMAGES_WAIT = [
     "assets/img/4_enemie_boss_chicken/2_alert/G5.png",
@@ -181,7 +189,8 @@ class Endboss extends MovableObject {
         if (result instanceof Promise) {
           await result;
         } else {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          let delay = this.ACTION_DELAYS[action] ?? 1000;
+          await new Promise((resolve) => setTimeout(resolve, delay));
         }
         if (this.isHurt) {
           break;
