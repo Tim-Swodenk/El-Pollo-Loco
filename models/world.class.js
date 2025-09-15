@@ -33,7 +33,7 @@ class World {
     this.draw();
     this.setWorld();
     this.run();
-    this.startChickenSpawner();
+    //this.startChickenSpawner();
     this.startCloudSpawner();
   }
 

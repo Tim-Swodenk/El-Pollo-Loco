@@ -120,7 +120,7 @@ class Endboss extends MovableObject {
     this.loadImages(this.IMAGES_JUMPATTACK);
     this.loadImages(this.IMAGES_HURT);
     this.loadImages(this.IMAGES_DEAD);
-    this.x = 2550;
+    this.x = 550; //2550
     this.offset = { top: 80, right: 5, bottom: 5, left: 25 };
     this.applyGravity();
     this.animate();
@@ -225,28 +225,8 @@ class Endboss extends MovableObject {
    * @returns {Promise<void>}
    */
   walkForward() {
+    console.log("vorwärts");
     this.currentState = "walkForward";
-
-    if (this._walkForwardPromise) {
-      return this._walkForwardPromise;
-    }
-
-    const startX = this.x;
-    this._walkForwardPromise = new Promise((resolve) => {
-      this._walkForwardInterval = setInterval(() => {
-        this.moveLeft();
-        this.playAnimation(this.IMAGES_WALK);
-
-        if (Math.abs(this.x - startX) >= this.walkForwardDistance) {
-          clearInterval(this._walkForwardInterval);
-          this._walkForwardInterval = null;
-          this._walkForwardPromise = null;
-          resolve();
-        }
-      }, 1000 / 60);
-    });
-
-    return this._walkForwardPromise;
   }
 
   /**
@@ -256,28 +236,8 @@ class Endboss extends MovableObject {
 
    */
   walkBackward() {
+    console.log("rückwärts");
     this.currentState = "walkBackward";
-
-    if (this._walkBackwardPromise) {
-      return this._walkBackwardPromise;
-    }
-
-    const startX = this.x;
-    this._walkBackwardPromise = new Promise((resolve) => {
-      this._walkBackwardInterval = setInterval(() => {
-        this.moveRight();
-        this.playAnimation(this.IMAGES_WALK);
-
-        if (Math.abs(this.x - startX) >= this.walkBackwardDistance) {
-          clearInterval(this._walkBackwardInterval);
-          this._walkBackwardInterval = null;
-          this._walkBackwardPromise = null;
-          resolve();
-        }
-      }, 1000 / 60);
-    });
-
-    return this._walkBackwardPromise;
   }
 
   /**
@@ -285,9 +245,9 @@ class Endboss extends MovableObject {
    * @returns {void}
    */
   alert() {
+    console.log("achtung");
     this.currentState = "alert";
     this.playAnimation(this.IMAGES_ALERT);
-    console.log("achtung");
   }
 
   /**
@@ -296,40 +256,8 @@ class Endboss extends MovableObject {
    * @returns {Promise<void>}
    */
   attack() {
+    console.log("angriff");
     this.currentState = "attack";
-
-    if (this._attackPromise) {
-      return this._attackPromise;
-    }
-
-    this._attackPromise = new Promise((resolve) => {
-      const moveInterval = setInterval(() => {
-        let distance = Math.abs(this.x - this.world.character.x);
-
-        if (distance > this.attackDistance) {
-          if (this.x > this.world.character.x) {
-            this.moveLeft();
-          } else {
-            this.moveRight();
-          }
-          this.playAnimation(this.IMAGES_WALK);
-        } else {
-          clearInterval(moveInterval);
-
-          const attackInterval = setInterval(() => {
-            this.playAnimation(this.IMAGES_ATTACK);
-          }, this.animationIntervalMs);
-
-          setTimeout(() => {
-            clearInterval(attackInterval);
-            this._attackPromise = null;
-            resolve();
-          }, this.IMAGES_ATTACK.length * this.animationIntervalMs);
-        }
-      }, 1000 / 60);
-    });
-
-    return this._attackPromise;
   }
 
   /**
@@ -338,35 +266,8 @@ class Endboss extends MovableObject {
    * @returns {Promise<void>}
    */
   jumpAttack() {
+    console.log("angrif jump");
     this.currentState = "jumpAttack";
-
-    if (this._jumpAttackPromise) {
-      return this._jumpAttackPromise;
-    }
-
-    if (!this.isAboveGround()) {
-      this.jump();
-    }
-    const startX = this.x;
-    this._jumpAttackPromise = new Promise((resolve) => {
-      this._jumpAttackInterval = setInterval(() => {
-        if (this.x > this.world.character.x) {
-          this.moveLeft();
-        } else {
-          this.moveRight();
-        }
-        this.playAnimation(this.IMAGES_JUMPATTACK);
-
-        if (Math.abs(this.x - startX) >= this.jumpAttackDistance) {
-          clearInterval(this._jumpAttackInterval);
-          this._jumpAttackInterval = null;
-          this._jumpAttackPromise = null;
-          resolve();
-        }
-      }, 1000 / 60);
-    });
-
-    return this._jumpAttackPromise;
   }
 
   /**
