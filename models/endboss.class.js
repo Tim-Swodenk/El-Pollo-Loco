@@ -8,9 +8,10 @@ class Endboss extends MovableObject {
   y = 60;
   energy = 100;
 
-  ANIMATION_INTERVAL = 200;
-  animationInterval;
-  currentState = "walkForward";
+  animationIntervalMs = 350;
+  animationIntervalId;
+
+  currentState = "wait";
 
   /** Index of the next step in {@link jumpPath}. */
   jumpPathIndex = 0;
@@ -23,11 +24,18 @@ class Endboss extends MovableObject {
    * @type {string[][]}
    */
   SEQUENCES = [
-    //["walkForward", "alert", "attack", "walkBackward"],
-    //["alert", "attack", "walkBackward"],
-    //["walkBackward", "alert", "walkForward"],
-    //["alert", "jumpAttack", "walkBackward"],
-    ["jumpAttack", "alert", "jumpAttack"],
+    ["wait", "walkForward", "alert", "walkBackward"],
+    ["wait", "alert", "attack", "walkBackward"],
+    ["wait", "walkForward", "walkBackward", "attack", "walkBackward"],
+    ["wait", "alert", "jumpAttack", "walkBackward"],
+    [
+      "wait",
+      "alert",
+      "walkForward",
+      "walkBackward",
+      "jumpAttack",
+      "walkBackward",
+    ],
   ];
 
   /** Indicates whether a sequence is currently running. */
@@ -38,6 +46,14 @@ class Endboss extends MovableObject {
 
   /** Indicates whether the endboss is currently hurt. */
   isHurt = false;
+
+  /**
+   * Default distances (in px) for endboss actions. Adjust to tweak behavior.
+   */
+  walkForwardDistance = 200;
+  walkBackwardDistance = 200;
+  attackDistance = 100;
+  jumpAttackDistance = 200;
 
   IMAGES_WALK = [
     "assets/img/4_enemie_boss_chicken/1_walk/G1.png",
@@ -117,7 +133,7 @@ class Endboss extends MovableObject {
    * @returns {void}
    */
   animate() {
-    this.animationInterval = setInterval(() => {
+    this.animationIntervalId = setInterval(() => {
       switch (this.currentState) {
         case "walkForward":
           this.walkForward();
@@ -141,7 +157,7 @@ class Endboss extends MovableObject {
           this.alert();
           break;
       }
-    }, this.ANIMATION_INTERVAL);
+    }, this.animationIntervalMs);
   }
 
   /**
@@ -251,7 +267,7 @@ class Endboss extends MovableObject {
     setTimeout(() => {
       this.isHurt = false;
       this.currentState = "alert";
-    }, this.IMAGES_HURT.length * 200);
+    }, this.IMAGES_HURT.length * this.animationIntervalMs);
   }
 
   /**
@@ -275,8 +291,8 @@ class Endboss extends MovableObject {
   die() {
     this.currentState = "dead";
     setTimeout(() => {
-      if (this.animationInterval) {
-        clearInterval(this.animationInterval);
+      if (this.animationIntervalId) {
+        clearInterval(this.animationIntervalId);
       }
       this.dead = true;
       if (this.world && this.world.level && this.world.level.enemies) {
@@ -285,6 +301,6 @@ class Endboss extends MovableObject {
           this.world.level.enemies.splice(index, 1);
         }
       }
-    }, this.IMAGES_DEAD.length * this.ANIMATION_INTERVAL);
+    }, this.IMAGES_DEAD.length * this.animationIntervalMs);
   }
 }
