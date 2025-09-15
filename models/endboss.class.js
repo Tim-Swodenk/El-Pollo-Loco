@@ -143,6 +143,9 @@ class Endboss extends MovableObject {
   animate() {
     this.animationIntervalId = setInterval(() => {
       switch (this.currentState) {
+        case "wait":
+          this.wait();
+          break;
         case "walkForward":
           this.walkForward();
           break;
@@ -213,28 +216,68 @@ class Endboss extends MovableObject {
     this.currentState = "wait";
     this.playAnimation(this.IMAGES_WAIT);
     console.log("warten");
-    return new Promise((resolve) => setTimeout(resolve, 10000));
-  }
-
-  /** * Moves right while playing the walking animation.
-   * @returns {void}
-   */
-  walkForward() {
-    this.currentState = "walkForward";
-    this.moveLeft();
-    this.playAnimation(this.IMAGES_WALK);
-    console.log("lauf vorwärts");
+    return new Promise((resolve) => setTimeout(resolve, 1500));
   }
 
   /**
-   * Moves left while playing the walking animation.
-   * @returns {void}
+   * Moves left for {@link walkForwardDistance} pixels.
+   * Resolves once the distance is covered.
+   * @returns {Promise<void>}
+   */
+  walkForward() {
+    this.currentState = "walkForward";
+
+    if (this._walkForwardPromise) {
+      return this._walkForwardPromise;
+    }
+
+    const startX = this.x;
+    this._walkForwardPromise = new Promise((resolve) => {
+      this._walkForwardInterval = setInterval(() => {
+        this.moveLeft();
+        this.playAnimation(this.IMAGES_WALK);
+
+        if (Math.abs(this.x - startX) >= this.walkForwardDistance) {
+          clearInterval(this._walkForwardInterval);
+          this._walkForwardInterval = null;
+          this._walkForwardPromise = null;
+          resolve();
+        }
+      }, 1000 / 60);
+    });
+
+    return this._walkForwardPromise;
+  }
+
+  /**
+    * Moves right for {@link walkBackwardDistance} pixels.
+   * Resolves once the distance is covered.
+   * @returns {Promise<void>}
+
    */
   walkBackward() {
     this.currentState = "walkBackward";
-    this.moveRight();
-    this.playAnimation(this.IMAGES_WALK);
-    console.log("lauf rückwärts");
+
+    if (this._walkBackwardPromise) {
+      return this._walkBackwardPromise;
+    }
+
+    const startX = this.x;
+    this._walkBackwardPromise = new Promise((resolve) => {
+      this._walkBackwardInterval = setInterval(() => {
+        this.moveRight();
+        this.playAnimation(this.IMAGES_WALK);
+
+        if (Math.abs(this.x - startX) >= this.walkBackwardDistance) {
+          clearInterval(this._walkBackwardInterval);
+          this._walkBackwardInterval = null;
+          this._walkBackwardPromise = null;
+          resolve();
+        }
+      }, 1000 / 60);
+    });
+
+    return this._walkBackwardPromise;
   }
 
   /**
@@ -248,28 +291,82 @@ class Endboss extends MovableObject {
   }
 
   /**
-   * Plays the attack animation.
-   * @returns {void}
+   * Approaches the character until within {@link attackDistance}.
+   * Then plays the attack animation once and resolves.
+   * @returns {Promise<void>}
    */
   attack() {
     this.currentState = "attack";
-    this.playAnimation(this.IMAGES_ATTACK);
-    console.log("angriff");
+
+    if (this._attackPromise) {
+      return this._attackPromise;
+    }
+
+    this._attackPromise = new Promise((resolve) => {
+      const moveInterval = setInterval(() => {
+        let distance = Math.abs(this.x - this.world.character.x);
+
+        if (distance > this.attackDistance) {
+          if (this.x > this.world.character.x) {
+            this.moveLeft();
+          } else {
+            this.moveRight();
+          }
+          this.playAnimation(this.IMAGES_WALK);
+        } else {
+          clearInterval(moveInterval);
+
+          const attackInterval = setInterval(() => {
+            this.playAnimation(this.IMAGES_ATTACK);
+          }, this.animationIntervalMs);
+
+          setTimeout(() => {
+            clearInterval(attackInterval);
+            this._attackPromise = null;
+            resolve();
+          }, this.IMAGES_ATTACK.length * this.animationIntervalMs);
+        }
+      }, 1000 / 60);
+    });
+
+    return this._attackPromise;
   }
 
   /**
-   * Performs a jumping attack moving toward the character.
-   * @returns {void}
+  Jumps and moves toward the character for
+   * {@link jumpAttackDistance} pixels.
+   * @returns {Promise<void>}
    */
   jumpAttack() {
     this.currentState = "jumpAttack";
-    console.log("sprung angriff");
+
+    if (this._jumpAttackPromise) {
+      return this._jumpAttackPromise;
+    }
 
     if (!this.isAboveGround()) {
       this.jump();
-      this.speedY = 25;
     }
-    this.playAnimation(this.IMAGES_JUMPATTACK);
+    const startX = this.x;
+    this._jumpAttackPromise = new Promise((resolve) => {
+      this._jumpAttackInterval = setInterval(() => {
+        if (this.x > this.world.character.x) {
+          this.moveLeft();
+        } else {
+          this.moveRight();
+        }
+        this.playAnimation(this.IMAGES_JUMPATTACK);
+
+        if (Math.abs(this.x - startX) >= this.jumpAttackDistance) {
+          clearInterval(this._jumpAttackInterval);
+          this._jumpAttackInterval = null;
+          this._jumpAttackPromise = null;
+          resolve();
+        }
+      }, 1000 / 60);
+    });
+
+    return this._jumpAttackPromise;
   }
 
   /**
