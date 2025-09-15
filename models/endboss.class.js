@@ -55,6 +55,12 @@ class Endboss extends MovableObject {
   attackDistance = 100;
   jumpAttackDistance = 200;
 
+  IMAGES_WAIT = [
+    "assets/img/4_enemie_boss_chicken/2_alert/G5.png",
+    "assets/img/4_enemie_boss_chicken/2_alert/G6.png",
+    "assets/img/4_enemie_boss_chicken/2_alert/G7.png",
+  ];
+
   IMAGES_WALK = [
     "assets/img/4_enemie_boss_chicken/1_walk/G1.png",
     "assets/img/4_enemie_boss_chicken/1_walk/G2.png",
@@ -107,9 +113,11 @@ class Endboss extends MovableObject {
    */
   constructor() {
     super().loadImage(this.IMAGES_ALERT[0]);
+    this.loadImages(this.IMAGES_WAIT);
     this.loadImages(this.IMAGES_WALK);
     this.loadImages(this.IMAGES_ALERT);
     this.loadImages(this.IMAGES_ATTACK);
+    this.loadImages(this.IMAGES_JUMPATTACK);
     this.loadImages(this.IMAGES_HURT);
     this.loadImages(this.IMAGES_DEAD);
     this.x = 2550;
@@ -199,6 +207,13 @@ class Endboss extends MovableObject {
       await this.playSequence(sequence);
       this.isPlayingSequence = false;
     }, 5000);
+  }
+
+  wait() {
+    this.currentState = "wait";
+    this.playAnimation(this.IMAGES_WAIT);
+    console.log("warten");
+    return new Promise((resolve) => setTimeout(resolve, 10000));
   }
 
   /** * Moves right while playing the walking animation.
