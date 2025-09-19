@@ -15,6 +15,7 @@ class Endboss extends MovableObject {
   isPlayingSequence = false;
   behaviorInterval;
   isHurt = false;
+  isJumpAttackActive = false;
 
   currentState = "wait";
 
@@ -23,10 +24,12 @@ class Endboss extends MovableObject {
    * @type {string[][]}
    */
   SEQUENCES = [
-    ["walkForward", "alert", "walkBackward"],
-    ["alert", "attack", "walkBackward"] /** 
+    ["alert", "jumpAttack", "walkBackward"],
+    /** 
+     * ["walkForward", "alert", "walkBackward"]
+     * ["alert", "attack", "walkBackward"] 
     ["wait", "walkForward", "walkBackward", "attack", "walkBackward"],
-    ["wait", "alert", "jumpAttack", "walkBackward"],
+   
     [
       "wait",
       "alert",
@@ -34,7 +37,7 @@ class Endboss extends MovableObject {
       "walkBackward",
       "jumpAttack",
       "walkBackward",
-    ],*/,
+    ],*/
   ];
 
   /**
@@ -44,7 +47,7 @@ class Endboss extends MovableObject {
   walkForwardDistance = 200;
   walkBackwardDistance = 200;
   attackDistance = 100;
-  jumpAttackDistance = 200;
+  jumpAttackDistance = 300;
 
   ACTION_DELAYS = {
     walkForward: 3000,
@@ -193,7 +196,7 @@ class Endboss extends MovableObject {
    * Periodically selects and plays random behavior sequences.
    * @returns {void}
    */
-  startRandomBehavior(playOnce = false) {
+  startRandomBehavior() {
     this.behaviorInterval = setInterval(async () => {
       if (this.isPlayingSequence || this.isHurt) {
         return;
@@ -204,6 +207,20 @@ class Endboss extends MovableObject {
       await this.playSequence(sequence);
       this.isPlayingSequence = false;
     }, 5000);
+  }
+
+  playAnimationOnce(images, interval = this.animationIntervalMs) {
+    return new Promise((resolve) => {
+      let i = 0;
+      let id = setInterval(() => {
+        this.img = this.imageCache[images[i]];
+        i++;
+        if (i >= images.length) {
+          clearInterval(id);
+          resolve();
+        }
+      }, interval);
+    });
   }
 
   wait() {
@@ -238,10 +255,22 @@ class Endboss extends MovableObject {
     this.playAnimation(this.IMAGES_ATTACK);
   }
 
-  jumpAttack() {
-    console.log("angrif jump");
+  async jumpAttack() {
+    if (this.isJumpAttackActive) return;
+
+    console.log("angriff jump");
+    console.log(this.x);
+
+    this.isJumpAttackActive = true;
     this.currentState = "jumpAttack";
-    this.playAnimation(this.IMAGES_JUMPATTACK);
+
+    this.jump();
+    this.x -= this.jumpAttackDistance;
+
+    await this.playAnimationOnce(this.IMAGES_JUMPATTACK);
+
+    this.isJumpAttackActive = false;
+    this.currentState = "wait";
   }
 
   hurt() {
