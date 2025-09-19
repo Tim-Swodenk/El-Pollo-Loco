@@ -75,11 +75,12 @@ class MovableObject extends DrawableObject {
    * @returns {void}
    */
   hit(damage = 20) {
-    super.hit(damage);
-    if (this.energy > 0) {
-      this.isHurt = true;
-      this.hurt();
-    } else this.die();
+    this.energy -= damage;
+    if (this.energy < 0) {
+      this.energy = 0;
+    } else {
+      this.lastHit = new Date().getTime();
+    }
   }
 
   /**

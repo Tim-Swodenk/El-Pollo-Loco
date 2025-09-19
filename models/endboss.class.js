@@ -14,13 +14,17 @@ class Endboss extends MovableObject {
 
   isPlayingSequence = false;
   behaviorInterval;
-  isHurt = false;
   isJumpAttackActive = false;
-  isMovingHoriz = false;
+  hurtOverlayUntil = 0;
 
   currentState = "wait";
 
-  SEQUENCES = [["alert", "jumpAttack", "walkBackward"]];
+  SEQUENCES = [
+    ["alert", "jumpAttack", "walkBackward"],
+    ["walkForward", "alert", "walkBackward"],
+    ["alert", "walkForward", "walkBackward"],
+    ["walkForward", "alert", "attack", "walkBackward"],
+  ];
 
   walkForwardDistance = 300;
   walkBackwardDistance = 300;
@@ -28,11 +32,12 @@ class Endboss extends MovableObject {
   jumpAttackDistance = 300;
 
   ACTION_DELAYS = {
-    walkForward: 2000,
-    walkBackward: 2000,
-    alert: 1500,
-    attack: 2000,
+    walkForward: 1000,
+    walkBackward: 1000,
+    alert: 500,
+    attack: 1000,
     jumpAttack: 800,
+    wait: 1000,
   };
 
   IMAGES_WAIT = [
@@ -92,33 +97,39 @@ class Endboss extends MovableObject {
     this.loadImages(this.IMAGES_JUMPATTACK);
     this.loadImages(this.IMAGES_HURT);
     this.loadImages(this.IMAGES_DEAD);
-    this.x = 500;
+    this.x = 2550;
+    this.spawnX = this.x;
+    this._moveId = 0;
     this.offset = { top: 80, right: 5, bottom: 5, left: 25 };
     this.applyGravity();
     this.animate();
     this.startRandomBehavior();
   }
 
+  // --- helpers ---
   sleep(ms) {
     return new Promise((r) => setTimeout(r, ms));
   }
-
   setImage(path) {
     this.img = this.imageCache[path];
   }
-
   isAboveGround() {
     return this.y < 60;
   }
 
   animate() {
     this.animationIntervalId = setInterval(() => {
+      if (performance.now() < this.hurtOverlayUntil) {
+        this.playAnimation(this.IMAGES_HURT);
+        return;
+      }
       if (
         this.currentState === "walkForward" ||
-        this.currentState === "walkBackward"
-      )
+        this.currentState === "walkBackward" ||
+        this.currentState === "return"
+      ) {
         this.playAnimation(this.IMAGES_WALK);
-      else if (this.currentState === "wait")
+      } else if (this.currentState === "wait")
         this.playAnimation(this.IMAGES_WAIT);
       else if (this.currentState === "alert")
         this.playAnimation(this.IMAGES_ALERT);
@@ -133,47 +144,38 @@ class Endboss extends MovableObject {
 
   async playSequence(sequence) {
     for (let a of sequence) {
-      if (this.isHurt) break;
+      if (this.currentState === "dead" || this.dead) break;
       if (typeof this[a] !== "function") continue;
       let out = this[a]();
       if (out instanceof Promise) await out;
       else await this.sleep(this.ACTION_DELAYS[a] ?? 1000);
-      if (this.isHurt) break;
     }
-    this.currentState = "wait";
-    this.playAnimation(this.IMAGES_WAIT);
+    if (this.currentState !== "dead" && !this.dead) {
+      this.currentState = "wait";
+      this.playAnimation(this.IMAGES_WAIT);
+    }
   }
 
   startRandomBehavior() {
     this.behaviorInterval = setInterval(async () => {
-      if (this.isPlayingSequence || this.isHurt) return;
+      if (this.isPlayingSequence || this.dead) return;
       let seq =
         this.SEQUENCES[Math.floor(Math.random() * this.SEQUENCES.length)];
       this.isPlayingSequence = true;
+      console.log(seq);
+
       await this.playSequence(seq);
       this.isPlayingSequence = false;
-    }, 5000);
-  }
-
-  playAnimationOnce(images, interval = this.animationIntervalMs) {
-    return new Promise((resolve) => {
-      let i = 0;
-      let id = setInterval(() => {
-        this.img = this.imageCache[images[i++]];
-        if (i >= images.length) {
-          clearInterval(id);
-          resolve();
-        }
-      }, interval);
-    });
+    }, 1000);
   }
 
   moveXOverTime(dx, duration, onProgress) {
     return new Promise((resolve) => {
       let start = performance.now(),
-        startX = this.x;
+        startX = this.x,
+        id = ++this._moveId;
       let step = (now) => {
-        if (this.dead) return resolve();
+        if (id !== this._moveId || this.dead) return resolve();
         let p = Math.min((now - start) / duration, 1);
         this.x = startX + dx * p;
         if (onProgress) onProgress(p, now - start);
@@ -184,35 +186,33 @@ class Endboss extends MovableObject {
     });
   }
 
-  wait() {
+  cancelMove() {
+    this._moveId++;
+  }
+
+  // --- states/actions ---
+  wait(ms = this.ACTION_DELAYS.wait) {
     this.currentState = "wait";
     this.playAnimation(this.IMAGES_WAIT);
+    return this.sleep(ms);
   }
 
   walkForward() {
     this.currentState = "walkForward";
     this.playAnimation(this.IMAGES_WALK);
-    if (this.isMovingHoriz) return;
-    this.isMovingHoriz = true;
     return this.moveXOverTime(
       -this.walkForwardDistance,
       this.ACTION_DELAYS.walkForward
-    ).finally(() => {
-      this.isMovingHoriz = false;
-    });
+    );
   }
 
   walkBackward() {
     this.currentState = "walkBackward";
     this.playAnimation(this.IMAGES_WALK);
-    if (this.isMovingHoriz) return;
-    this.isMovingHoriz = true;
     return this.moveXOverTime(
       this.walkBackwardDistance,
       this.ACTION_DELAYS.walkBackward
-    ).finally(() => {
-      this.isMovingHoriz = false;
-    });
+    );
   }
 
   alert() {
@@ -227,18 +227,14 @@ class Endboss extends MovableObject {
 
   async jumpAttack() {
     if (this.isJumpAttackActive) return;
-
     this.isJumpAttackActive = true;
     this.currentState = "jumpAttack";
-
     let duration = this.ACTION_DELAYS.jumpAttack,
       dx = -this.jumpAttackDistance;
     let apex = false,
       lastY = this.y;
-
     this.setImage(this.IMAGES_JUMPATTACK[0]);
     this.jump();
-
     await this.moveXOverTime(dx, duration, (p) => {
       if (!apex && this.y > lastY) {
         this.setImage(this.IMAGES_JUMPATTACK[1]);
@@ -247,34 +243,32 @@ class Endboss extends MovableObject {
       lastY = this.y;
       if (p > 0.85) this.setImage(this.IMAGES_JUMPATTACK[2]);
     });
-
     this.isJumpAttackActive = false;
+    if (this.currentState === "dead" || this.dead) return;
     this.currentState = "wait";
     this.playAnimation(this.IMAGES_WAIT);
   }
 
-  hurt() {
-    this.currentState = "hurt";
-    this.playAnimation(this.IMAGES_HURT);
-    setTimeout(() => {
-      this.isHurt = false;
-      this.currentState = "wait";
-    }, this.IMAGES_HURT.length * this.animationIntervalMs);
-  }
-
   hit(damage = 20) {
     super.hit(damage);
-    if (this.energy > 0) this.hurt();
-    else this.die();
+    if (this.energy <= 0) return this.die();
+    this.hurtOverlayUntil =
+      performance.now() + this.IMAGES_HURT.length * this.animationIntervalMs;
   }
 
   die() {
+    this.hurtOverlayUntil = 0;
+    this.isJumpAttackActive = false;
+    this.cancelMove();
+    if (this.behaviorInterval) clearInterval(this.behaviorInterval);
+
     this.currentState = "dead";
+    this.currentImage = 0;
+
     setTimeout(() => {
       if (this.animationIntervalId) clearInterval(this.animationIntervalId);
-      if (this.behaviorInterval) clearInterval(this.behaviorInterval);
       this.dead = true;
-      if (this.world && this.world.level && this.world.level.enemies) {
+      if (this.world?.level?.enemies) {
         let i = this.world.level.enemies.indexOf(this);
         if (i > -1) this.world.level.enemies.splice(i, 1);
       }
