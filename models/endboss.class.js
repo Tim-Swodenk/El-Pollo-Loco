@@ -16,6 +16,8 @@ class Endboss extends MovableObject {
   behaviorInterval;
   isJumpAttackActive = false;
   hurtOverlayUntil = 0;
+  activated = false;
+  visibilityCheckId = null;
 
   currentState = "wait";
 
@@ -102,8 +104,7 @@ class Endboss extends MovableObject {
     this._moveId = 0;
     this.offset = { top: 80, right: 5, bottom: 5, left: 25 };
     this.applyGravity();
-    this.animate();
-    this.startRandomBehavior();
+    this.activateWhenVisible(80);
   }
 
   // --- helpers ---
@@ -115,6 +116,31 @@ class Endboss extends MovableObject {
   }
   isAboveGround() {
     return this.y < 60;
+  }
+
+  activateWhenVisible(buffer = 0) {
+    if (this.isOnScreen(this.world, buffer)) return this.activate();
+    this.visibilityCheckId = setInterval(() => {
+      if (this.world && this.isOnScreen(this.world, buffer)) {
+        clearInterval(this.visibilityCheckId);
+        this.visibilityCheckId = null;
+        this.activate();
+      }
+    }, 120);
+  }
+
+  isOnScreen(world, buffer = 0) {
+    if (!world || !world.ctx) return false;
+    let w = world.ctx.canvas.width;
+    let screenX = this.x + (world.camera_x || 0); // ggf. Vorzeichen anpassen
+    return screenX + this.width > -buffer && screenX < w + buffer;
+  }
+
+  activate() {
+    if (this.activated) return;
+    this.activated = true;
+    this.animate();
+    this.startRandomBehavior();
   }
 
   animate() {
@@ -261,10 +287,12 @@ class Endboss extends MovableObject {
     this.isJumpAttackActive = false;
     this.cancelMove();
     if (this.behaviorInterval) clearInterval(this.behaviorInterval);
-
+    if (this.visibilityCheckId) {
+      clearInterval(this.visibilityCheckId);
+      this.visibilityCheckId = null;
+    }
     this.currentState = "dead";
     this.currentImage = 0;
-
     setTimeout(() => {
       if (this.animationIntervalId) clearInterval(this.animationIntervalId);
       this.dead = true;
