@@ -23,13 +23,15 @@ class Endboss extends MovableObject {
     ["alert", "jumpAttack", "walkBackward"],
     ["walkForward", "alert", "walkBackward"],
     ["alert", "walkForward", "walkBackward"],
-    ["walkForward", "alert", "attack", "walkBackward"],
+    ["walkForward", "attack", "walkBackward"],
   ];
 
   walkForwardDistance = 300;
   walkBackwardDistance = 300;
-  attackDistance = 100;
+  attackDistance = 200;
   jumpAttackDistance = 300;
+  attackEarlyMargin = 220; // früher loslegen: +120px zum normalen attackDistance
+  attackLungeDistance = 200; // Vorstoß während der Attacke
 
   ACTION_DELAYS = {
     walkForward: 1000,
@@ -97,11 +99,12 @@ class Endboss extends MovableObject {
     this.loadImages(this.IMAGES_JUMPATTACK);
     this.loadImages(this.IMAGES_HURT);
     this.loadImages(this.IMAGES_DEAD);
-    this.x = 2550;
+    this.x = 2600;
     this.spawnX = this.x;
     this._moveId = 0;
     this.offset = { top: 80, right: 5, bottom: 5, left: 25 };
     this.applyGravity();
+    this.startProximityAggro();
     this.animate();
     this.startRandomBehavior();
   }
@@ -115,6 +118,29 @@ class Endboss extends MovableObject {
   }
   isAboveGround() {
     return this.y < 60;
+  }
+
+  centerX() {
+    return this.x + this.width * 0.5;
+  }
+
+  distanceToTargetX() {
+    let c = this.world?.character;
+    if (!c) return Infinity;
+    return Math.abs(c.x + c.width * 0.5 - this.centerX());
+  }
+
+  dirToTarget() {
+    let c = this.world?.character;
+    if (!c) return 0;
+    let d = c.x + c.width * 0.5 - this.centerX();
+    return d === 0 ? 0 : d > 0 ? 1 : -1;
+  }
+
+  isInAttackRange() {
+    return (
+      this.distanceToTargetX() <= this.attackDistance + this.attackEarlyMargin
+    );
   }
 
   animate() {
@@ -221,8 +247,12 @@ class Endboss extends MovableObject {
   }
 
   attack() {
+    if (!this.isInAttackRange()) return this.approachTarget();
     this.currentState = "attack";
     this.playAnimation(this.IMAGES_ATTACK);
+    let dir = this.dirToTarget();
+    let dx = dir * this.attackLungeDistance;
+    return this.moveXOverTime(dx, this.ACTION_DELAYS.attack);
   }
 
   async jumpAttack() {
@@ -247,6 +277,38 @@ class Endboss extends MovableObject {
     if (this.currentState === "dead" || this.dead) return;
     this.currentState = "wait";
     this.playAnimation(this.IMAGES_WAIT);
+  }
+
+  approachTarget(range = this.attackDistance + this.attackEarlyMargin) {
+    let c = this.world?.character;
+    if (!c) return;
+    let delta = c.x + c.width * 0.5 - this.centerX();
+    let gap = Math.abs(delta) - range;
+    if (gap <= 0) return;
+    let left = delta < 0,
+      step = Math.min(
+        gap,
+        left ? this.walkForwardDistance : this.walkBackwardDistance
+      );
+    let dx = left ? -step : step;
+    this.currentState = left ? "walkForward" : "walkBackward";
+    this.playAnimation(this.IMAGES_WALK);
+    let dur = left
+      ? this.ACTION_DELAYS.walkForward
+      : this.ACTION_DELAYS.walkBackward;
+    return this.moveXOverTime(dx, dur);
+  }
+
+  startProximityAggro() {
+    this.aggroId = setInterval(() => {
+      if (
+        this.dead ||
+        this.currentState === "attack" ||
+        this.isJumpAttackActive
+      )
+        return;
+      if (this.isInAttackRange()) this.attack();
+    }, 250);
   }
 
   hit(damage = 20) {
