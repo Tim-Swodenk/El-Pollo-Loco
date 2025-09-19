@@ -32,6 +32,11 @@ class Endboss extends MovableObject {
   jumpAttackDistance = 300;
   attackEarlyMargin = 220; // früher loslegen: +120px zum normalen attackDistance
   attackLungeDistance = 200; // Vorstoß während der Attacke
+  enrageHp = 50; // unter 50 HP wird er wilder
+  enrageMult = 1.4; // Multiplikator im Enrage
+  dashDistance = 260; // kurzer Sprint Richtung Spieler
+  aggroTickMs = 120; // Reaktionszeit für Aggro-Loop
+  maxAttackChain = 2; // max. Folgeangriffe
 
   ACTION_DELAYS = {
     walkForward: 1000,
@@ -138,9 +143,23 @@ class Endboss extends MovableObject {
   }
 
   isInAttackRange() {
+    let m = this.getEnrage();
     return (
-      this.distanceToTargetX() <= this.attackDistance + this.attackEarlyMargin
+      this.distanceToTargetX() <=
+      (this.attackDistance + this.attackEarlyMargin) * m
     );
+  }
+
+  getEnrage() {
+    return this.energy <= this.enrageHp ? this.enrageMult : 1;
+  }
+
+  faceTarget() {
+    let d = this.dirToTarget();
+    if (d === 0) return;
+    this.otherDirection = d > 0; // ← schaut NACH RECHTS, wenn Spieler rechts ist
+    // Wenn er damit wieder falsch herum schaut: einfach auf (d < 0) ändern.
+    // this.otherDirection = d < 0;
   }
 
   animate() {
@@ -246,13 +265,22 @@ class Endboss extends MovableObject {
     this.playAnimation(this.IMAGES_ALERT);
   }
 
-  attack() {
+  attack(chain = 0) {
     if (!this.isInAttackRange()) return this.approachTarget();
     this.currentState = "attack";
+    this.faceTarget();
     this.playAnimation(this.IMAGES_ATTACK);
-    let dir = this.dirToTarget();
-    let dx = dir * this.attackLungeDistance;
-    return this.moveXOverTime(dx, this.ACTION_DELAYS.attack);
+    let dx =
+      this.dirToTarget() *
+      Math.round(this.attackLungeDistance * this.getEnrage());
+    return this.moveXOverTime(dx, this.ACTION_DELAYS.attack).then(() => {
+      if (
+        chain < this.maxAttackChain &&
+        this.isInAttackRange() &&
+        Math.random() < 0.6
+      )
+        return this.attack(chain + 1); // 60% Chance auf Folgehit
+    });
   }
 
   async jumpAttack() {
@@ -277,6 +305,7 @@ class Endboss extends MovableObject {
     if (this.currentState === "dead" || this.dead) return;
     this.currentState = "wait";
     this.playAnimation(this.IMAGES_WAIT);
+    this.faceTarget();
   }
 
   approachTarget(range = this.attackDistance + this.attackEarlyMargin) {
@@ -292,6 +321,7 @@ class Endboss extends MovableObject {
       );
     let dx = left ? -step : step;
     this.currentState = left ? "walkForward" : "walkBackward";
+    this.faceTarget();
     this.playAnimation(this.IMAGES_WALK);
     let dur = left
       ? this.ACTION_DELAYS.walkForward
@@ -299,16 +329,29 @@ class Endboss extends MovableObject {
     return this.moveXOverTime(dx, dur);
   }
 
+  dashTowardsTarget() {
+    let dir = this.dirToTarget();
+    if (!dir) return;
+    this.currentState = dir < 0 ? "walkForward" : "walkBackward";
+    this.faceTarget();
+    this.playAnimation(this.IMAGES_WALK);
+    let dx = dir * Math.round(this.dashDistance * this.getEnrage());
+    let dur = Math.max(250, Math.round(this.ACTION_DELAYS.walkForward * 0.6));
+    return this.moveXOverTime(dx, dur);
+  }
+
   startProximityAggro() {
     this.aggroId = setInterval(() => {
-      if (
-        this.dead ||
-        this.currentState === "attack" ||
-        this.isJumpAttackActive
-      )
+      if (this.dead || this.isJumpAttackActive) return;
+      if (this.isInAttackRange()) {
+        if (this.currentState !== "attack") this.attack();
         return;
-      if (this.isInAttackRange()) this.attack();
-    }, 250);
+      }
+      let d = this.distanceToTargetX();
+      if (d > this.walkForwardDistance * 1.5) this.dashTowardsTarget();
+      else this.approachTarget();
+      if (Math.random() < 0.2 * this.getEnrage()) this.jumpAttack(); // öfter springen
+    }, this.aggroTickMs);
   }
 
   hit(damage = 20) {
