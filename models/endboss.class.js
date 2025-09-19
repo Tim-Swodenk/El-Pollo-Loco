@@ -9,7 +9,7 @@ class Endboss extends MovableObject {
   energy = 100;
   speed = 15;
 
-  animationIntervalMs = 150;
+  animationIntervalMs = 200;
   animationIntervalId;
 
   isPlayingSequence = false;
@@ -24,7 +24,7 @@ class Endboss extends MovableObject {
    */
   SEQUENCES = [
     ["walkForward", "alert", "walkBackward"],
-    /**["alert", "attack", "walkBackward"],
+    ["alert", "attack", "walkBackward"] /** 
     ["wait", "walkForward", "walkBackward", "attack", "walkBackward"],
     ["wait", "alert", "jumpAttack", "walkBackward"],
     [
@@ -34,7 +34,7 @@ class Endboss extends MovableObject {
       "walkBackward",
       "jumpAttack",
       "walkBackward",
-    ],*/
+    ],*/,
   ];
 
   /**
