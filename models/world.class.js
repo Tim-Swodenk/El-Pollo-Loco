@@ -15,7 +15,7 @@ class World {
   statusBarEndboss = new StatusBarEndboss();
   throwableObjects = [];
   lastCameraX = 0;
-  collectedBottles = 50;
+  collectedBottles = 0;
   maxBottles = 5;
   collectedCoins = 0;
   maxCoins = 5;

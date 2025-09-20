@@ -30,14 +30,14 @@ class Endboss extends MovableObject {
 
   walkForwardDistance = 300;
   walkBackwardDistance = 300;
-  attackDistance = 100;
+  attackDistance = 20;
   jumpAttackDistance = 300;
 
   ACTION_DELAYS = {
     walkForward: 1000,
     walkBackward: 1000,
     alert: 500,
-    attack: 1000,
+    attack: 800,
     jumpAttack: 800,
     wait: 1000,
   };
@@ -247,8 +247,34 @@ class Endboss extends MovableObject {
   }
 
   attack() {
+    if (this.dead || this.currentState === "dead") return;
     this.currentState = "attack";
-    this.playAnimation(this.IMAGES_ATTACK);
+    this.currentImage = 0;
+    let c = this.world?.character,
+      bc = this.x + this.width * 0.5;
+    let cc = c ? c.x + c.width * 0.5 : bc + 1,
+      dir = cc >= bc ? 1 : -1;
+
+    this.setImage(this.IMAGES_ATTACK[4]);
+    this.speedY = Math.max(this.speedY, 18);
+    let dur = this.ACTION_DELAYS.attack,
+      dx = dir * this.attackDistance;
+    let apex = false,
+      lastY = this.y;
+
+    return this.moveXOverTime(dx, dur, (p) => {
+      if (!apex && this.y > lastY) {
+        this.setImage(this.IMAGES_ATTACK[5]);
+        apex = true;
+      }
+      lastY = this.y;
+      if (p > 0.85) this.setImage(this.IMAGES_ATTACK[6]);
+    }).then(() => {
+      if (!this.dead) {
+        this.currentState = "wait";
+        this.playAnimation(this.IMAGES_WAIT);
+      }
+    });
   }
 
   async jumpAttack() {
