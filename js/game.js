@@ -72,32 +72,49 @@ function fitCanvasToScreen() {
   const el = document.getElementById("canvas");
   if (!el) return;
 
-  // Display-Zielgröße (CSS-Pixel), Seitenverhältnis 3:2 beibehalten
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  const targetW = Math.min(w, h * (BASE_W / BASE_H)); // 1.5
-  const targetH = Math.min(h, w * (BASE_H / BASE_W)); // 2/3
-
-  // Sichtbare Größe (CSS)
-  el.style.width = `${targetW}px`;
-  el.style.height = `${targetH}px`;
-
-  // HiDPI-Backbuffer
   const dpr = window.devicePixelRatio || 1;
-  const renderW = Math.round(targetW * dpr);
-  const renderH = Math.round(targetH * dpr);
 
-  if (el.width !== renderW || el.height !== renderH) {
-    el.width = renderW;
-    el.height = renderH;
+  if (isFullscreenActive()) {
+    // ----- VOLLBILD: skaliert auf verfügbaren Platz (3:2) + HiDPI -----
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const targetW = Math.min(w, h * (BASE_W / BASE_H)); // 1.5
+    const targetH = Math.min(h, w * (BASE_H / BASE_W)); // 2/3
+
+    // sichtbare Größe im Vollbild durch JS vorgeben
+    el.style.width = `${targetW}px`;
+    el.style.height = `${targetH}px`;
+
+    // interner Render-Buffer in echten Pixeln
+    const renderW = Math.round(targetW * dpr);
+    const renderH = Math.round(targetH * dpr);
+    if (el.width !== renderW || el.height !== renderH) {
+      el.width = renderW;
+      el.height = renderH;
+    }
+
+    // Welt 720×480 -> skaliert; plus dpr für Schärfe
+    const scale = targetW / BASE_W;
+    const ctx = el.getContext("2d");
+    ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+  } else {
+    // ----- NORMALMODUS: feste Weltgröße 720×480, zentriert im Layout -----
+    // CSS-Größen zurück dem CSS überlassen (breite max 720px, height auto)
+    el.style.width = "";
+    el.style.height = "";
+
+    // interner Buffer in HiDPI, aber *ohne* Layout-Skalierung
+    const renderW = Math.round(BASE_W * dpr);
+    const renderH = Math.round(BASE_H * dpr);
+    if (el.width !== renderW || el.height !== renderH) {
+      el.width = renderW;
+      el.height = renderH;
+    }
+
+    // nur dpr anwenden -> Weltkoordinaten bleiben 1:1 (720×480)
+    const ctx = el.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
-
-  // Einheitliche Skalierung von Welt (720x480) -> target (CSS),
-  // plus dpr für Schärfe. Da targetW/BASE_W == targetH/BASE_H (gleiches AR),
-  // reicht ein einheitlicher Faktor.
-  const scale = targetW / BASE_W;
-  const ctx = el.getContext("2d");
-  ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
 }
 
 /**
