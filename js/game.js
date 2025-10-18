@@ -3,52 +3,57 @@ let world;
 let keyboard = new Keyboard();
 let hasGameStarted = false;
 
+// Basisgröße der Spielwelt (dein aktuelles Canvas-Design)
+const BASE_W = 720;
+const BASE_H = 480;
+
 document.addEventListener("DOMContentLoaded", () => {
   const startButton = document.getElementById("start-button");
   const fullscreenButton = document.getElementById("fullscreen-button");
 
-  if (startButton) {
-    startButton.addEventListener("click", startGame);
-  }
-
+  if (startButton) startButton.addEventListener("click", startGame);
   if (fullscreenButton) {
     fullscreenButton.addEventListener("click", toggleFullscreen);
     updateFullscreenButtonState();
   }
 });
 
-document.addEventListener("fullscreenchange", updateFullscreenButtonState);
-document.addEventListener(
-  "webkitfullscreenchange",
-  updateFullscreenButtonState
-);
-document.addEventListener("mozfullscreenchange", updateFullscreenButtonState);
-document.addEventListener("MSFullscreenChange", updateFullscreenButtonState);
+document.addEventListener("fullscreenchange", onLayoutChange);
+document.addEventListener("webkitfullscreenchange", onLayoutChange);
+document.addEventListener("mozfullscreenchange", onLayoutChange);
+document.addEventListener("MSFullscreenChange", onLayoutChange);
+window.addEventListener("resize", onLayoutChange);
 
-/**
- * Initializes the game world and canvas.
- * @returns {void}
- */
-function init() {
-  canvas = document.getElementById("canvas");
-  world = new World(canvas, keyboard);
+function onLayoutChange() {
+  updateFullscreenButtonState();
+  fitCanvasToScreen();
 }
 
 /**
- * Hides the start screen and initializes the game once.
- * @returns {void}
+ * Initialisiert die Spielwelt und passt Canvas an.
+ */
+function init() {
+  canvas = document.getElementById("canvas");
+  // Stelle sicher, dass das Canvas die Basisgröße hat (logische Welt)
+  canvas.width = BASE_W;
+  canvas.height = BASE_H;
+
+  world = new World(canvas, keyboard);
+  // Nach dem Erzeugen der World einmal layouten
+  fitCanvasToScreen();
+}
+
+/**
+ * Startet das Spiel (nur einmal).
  */
 function startGame() {
-  if (hasGameStarted) {
-    return;
-  }
+  if (hasGameStarted) return;
 
   const startScreen = document.getElementById("start-screen");
   const gameContainer = document.getElementById("game-container");
   const startButton = document.getElementById("start-button");
 
   startButton?.blur();
-
   startScreen?.classList.add("is-hidden");
   startScreen?.setAttribute("inert", "");
   gameContainer?.classList.remove("is-hidden");
@@ -59,9 +64,44 @@ function startGame() {
 }
 
 /**
- * Updates keyboard state on key press.
- * @param {KeyboardEvent} e - Keydown event.
- * @returns {void}
+ * Setzt die Canvasgröße auf den verfügbaren Platz (3:2) und skaliert
+ * die Zeichenmatrix so, dass die Welt-Koordinaten (720x480) weiterpassen.
+ * Zudem wird HiDPI (devicePixelRatio) berücksichtigt -> scharfes Bild.
+ */
+function fitCanvasToScreen() {
+  const el = document.getElementById("canvas");
+  if (!el) return;
+
+  // Display-Zielgröße (CSS-Pixel), Seitenverhältnis 3:2 beibehalten
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const targetW = Math.min(w, h * (BASE_W / BASE_H)); // 1.5
+  const targetH = Math.min(h, w * (BASE_H / BASE_W)); // 2/3
+
+  // Sichtbare Größe (CSS)
+  el.style.width = `${targetW}px`;
+  el.style.height = `${targetH}px`;
+
+  // HiDPI-Backbuffer
+  const dpr = window.devicePixelRatio || 1;
+  const renderW = Math.round(targetW * dpr);
+  const renderH = Math.round(targetH * dpr);
+
+  if (el.width !== renderW || el.height !== renderH) {
+    el.width = renderW;
+    el.height = renderH;
+  }
+
+  // Einheitliche Skalierung von Welt (720x480) -> target (CSS),
+  // plus dpr für Schärfe. Da targetW/BASE_W == targetH/BASE_H (gleiches AR),
+  // reicht ein einheitlicher Faktor.
+  const scale = targetW / BASE_W;
+  const ctx = el.getContext("2d");
+  ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+}
+
+/**
+ * Keyboard down
  */
 window.addEventListener("keydown", (e) => {
   if (!hasGameStarted && (e.code === "Space" || e.code === "Enter")) {
@@ -69,72 +109,32 @@ window.addEventListener("keydown", (e) => {
     startGame();
     return;
   }
-
-  if (e.keyCode == 39) {
-    keyboard.RIGHT = true;
-  }
-
-  if (e.keyCode == 37) {
-    keyboard.LEFT = true;
-  }
-
-  if (e.keyCode == 38) {
-    keyboard.UP = true;
-  }
-
-  if (e.keyCode == 40) {
-    keyboard.DOWN = true;
-  }
-
-  if (e.keyCode == 32) {
-    keyboard.SPACE = true;
-  }
-  if (e.keyCode == 68) {
-    keyboard.D = true;
-  }
+  if (e.keyCode == 39) keyboard.RIGHT = true;
+  if (e.keyCode == 37) keyboard.LEFT = true;
+  if (e.keyCode == 38) keyboard.UP = true;
+  if (e.keyCode == 40) keyboard.DOWN = true;
+  if (e.keyCode == 32) keyboard.SPACE = true;
+  if (e.keyCode == 68) keyboard.D = true;
 });
 
 /**
- * Resets keyboard state on key release.
- * @param {KeyboardEvent} e - Keyup event.
- * @returns {void}
+ * Keyboard up
  */
 window.addEventListener("keyup", (e) => {
-  if (e.keyCode == 39) {
-    keyboard.RIGHT = false;
-  }
-
-  if (e.keyCode == 37) {
-    keyboard.LEFT = false;
-  }
-
-  if (e.keyCode == 38) {
-    keyboard.UP = false;
-  }
-
-  if (e.keyCode == 40) {
-    keyboard.DOWN = false;
-  }
-
-  if (e.keyCode == 32) {
-    keyboard.SPACE = false;
-  }
-
-  if (e.keyCode == 68) {
-    keyboard.D = false;
-  }
+  if (e.keyCode == 39) keyboard.RIGHT = false;
+  if (e.keyCode == 37) keyboard.LEFT = false;
+  if (e.keyCode == 38) keyboard.UP = false;
+  if (e.keyCode == 40) keyboard.DOWN = false;
+  if (e.keyCode == 32) keyboard.SPACE = false;
+  if (e.keyCode == 68) keyboard.D = false;
 });
 
 /**
- * Toggles fullscreen mode for the game container.
- * @returns {void}
+ * Fullscreen toggeln
  */
 function toggleFullscreen() {
   const gameContainer = document.getElementById("game-container");
-
-  if (!gameContainer) {
-    return;
-  }
+  if (!gameContainer) return;
 
   if (isFullscreenActive()) {
     exitFullscreen();
@@ -143,10 +143,6 @@ function toggleFullscreen() {
   }
 }
 
-/**
- * Checks if fullscreen is currently active.
- * @returns {boolean}
- */
 function isFullscreenActive() {
   return (
     document.fullscreenElement ||
@@ -156,49 +152,23 @@ function isFullscreenActive() {
   );
 }
 
-/**
- * Requests fullscreen mode for a given element.
- * @param {HTMLElement} element - Element to display in fullscreen.
- * @returns {void}
- */
 function requestFullscreen(element) {
-  if (element.requestFullscreen) {
-    element.requestFullscreen();
-  } else if (element.webkitRequestFullscreen) {
-    element.webkitRequestFullscreen();
-  } else if (element.mozRequestFullScreen) {
-    element.mozRequestFullScreen();
-  } else if (element.msRequestFullscreen) {
-    element.msRequestFullscreen();
-  }
+  if (element.requestFullscreen) element.requestFullscreen();
+  else if (element.webkitRequestFullscreen) element.webkitRequestFullscreen();
+  else if (element.mozRequestFullScreen) element.mozRequestFullScreen();
+  else if (element.msRequestFullscreen) element.msRequestFullscreen();
 }
 
-/**
- * Exits fullscreen mode if active.
- * @returns {void}
- */
 function exitFullscreen() {
-  if (document.exitFullscreen) {
-    document.exitFullscreen();
-  } else if (document.webkitExitFullscreen) {
-    document.webkitExitFullscreen();
-  } else if (document.mozCancelFullScreen) {
-    document.mozCancelFullScreen();
-  } else if (document.msExitFullscreen) {
-    document.msExitFullscreen();
-  }
+  if (document.exitFullscreen) document.exitFullscreen();
+  else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+  else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+  else if (document.msExitFullscreen) document.msExitFullscreen();
 }
 
-/**
- * Updates the fullscreen button label and state.
- * @returns {void}
- */
 function updateFullscreenButtonState() {
   const fullscreenButton = document.getElementById("fullscreen-button");
-
-  if (!fullscreenButton) {
-    return;
-  }
+  if (!fullscreenButton) return;
 
   const active = Boolean(isFullscreenActive());
   fullscreenButton.textContent = active ? "Vollbild verlassen" : "Vollbild";
