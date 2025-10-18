@@ -5,10 +5,25 @@ let hasGameStarted = false;
 
 document.addEventListener("DOMContentLoaded", () => {
   const startButton = document.getElementById("start-button");
+  const fullscreenButton = document.getElementById("fullscreen-button");
+
   if (startButton) {
     startButton.addEventListener("click", startGame);
   }
+
+  if (fullscreenButton) {
+    fullscreenButton.addEventListener("click", toggleFullscreen);
+    updateFullscreenButtonState();
+  }
 });
+
+document.addEventListener("fullscreenchange", updateFullscreenButtonState);
+document.addEventListener(
+  "webkitfullscreenchange",
+  updateFullscreenButtonState
+);
+document.addEventListener("mozfullscreenchange", updateFullscreenButtonState);
+document.addEventListener("MSFullscreenChange", updateFullscreenButtonState);
 
 /**
  * Initializes the game world and canvas.
@@ -109,3 +124,84 @@ window.addEventListener("keyup", (e) => {
     keyboard.D = false;
   }
 });
+
+/**
+ * Toggles fullscreen mode for the game container.
+ * @returns {void}
+ */
+function toggleFullscreen() {
+  const gameContainer = document.getElementById("game-container");
+
+  if (!gameContainer) {
+    return;
+  }
+
+  if (isFullscreenActive()) {
+    exitFullscreen();
+  } else {
+    requestFullscreen(gameContainer);
+  }
+}
+
+/**
+ * Checks if fullscreen is currently active.
+ * @returns {boolean}
+ */
+function isFullscreenActive() {
+  return (
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  );
+}
+
+/**
+ * Requests fullscreen mode for a given element.
+ * @param {HTMLElement} element - Element to display in fullscreen.
+ * @returns {void}
+ */
+function requestFullscreen(element) {
+  if (element.requestFullscreen) {
+    element.requestFullscreen();
+  } else if (element.webkitRequestFullscreen) {
+    element.webkitRequestFullscreen();
+  } else if (element.mozRequestFullScreen) {
+    element.mozRequestFullScreen();
+  } else if (element.msRequestFullscreen) {
+    element.msRequestFullscreen();
+  }
+}
+
+/**
+ * Exits fullscreen mode if active.
+ * @returns {void}
+ */
+function exitFullscreen() {
+  if (document.exitFullscreen) {
+    document.exitFullscreen();
+  } else if (document.webkitExitFullscreen) {
+    document.webkitExitFullscreen();
+  } else if (document.mozCancelFullScreen) {
+    document.mozCancelFullScreen();
+  } else if (document.msExitFullscreen) {
+    document.msExitFullscreen();
+  }
+}
+
+/**
+ * Updates the fullscreen button label and state.
+ * @returns {void}
+ */
+function updateFullscreenButtonState() {
+  const fullscreenButton = document.getElementById("fullscreen-button");
+
+  if (!fullscreenButton) {
+    return;
+  }
+
+  const active = Boolean(isFullscreenActive());
+  fullscreenButton.textContent = active ? "Vollbild verlassen" : "Vollbild";
+  fullscreenButton.setAttribute("aria-pressed", active ? "true" : "false");
+  document.body.classList.toggle("is-fullscreen", active);
+}
