@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="google" content="notranslate" />
     <title>El Pollo Loco</title>
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="./assets/img/10_fav_icon/favicon.png"
+    />
     <link rel="stylesheet" href="./css/style.css" />
     <script src="./models/world.class.js"></script>
     <script src="./models/drawable-object.class.js"></script>
@@ -31,9 +36,68 @@
 
     <script src="./js/game.js"></script>
   </head>
-  <body onload="init()">
-    <h1>El pollo loco</h1>
-
-    <canvas id="canvas" width="720" height="480"></canvas>
+  <body>
+    <main class="game-wrapper">
+      <section
+        id="start-screen"
+        class="start-screen"
+        aria-label="Spielstart El Pollo Loco"
+      >
+        <div class="start-screen__backdrop" aria-hidden="true"></div>
+        <div class="start-screen__content">
+          <h1 class="start-screen__title">El Pollo Loco</h1>
+          <p class="start-screen__lead">
+            Hilf Pepe dabei, sich durch die Wüste zu schlagen, sammle
+            Salsa-Flaschen ein und besiege den verrückten Boss-Hahn.
+          </p>
+          <ul class="start-screen__controls" aria-label="Steuerung">
+            <li>
+              <span class="key">←</span>
+              <span class="key">→</span>
+              <span class="label">Laufen</span>
+            </li>
+            <li>
+              <span class="key">SPACE</span>
+              <span class="label">Springen</span>
+            </li>
+            <li>
+              <span class="key">D</span>
+              <span class="label">Flasche werfen</span>
+            </li>
+          </ul>
+          <button id="start-button" class="start-screen__button" type="button">
+            Spiel starten
+          </button>
+          <p class="start-screen__hint">Oder drücke Enter/Leertaste</p>
+        </div>
+      </section>
+      <section
+        id="game-container"
+        class="game-container is-hidden"
+        aria-hidden="true"
+      >
+        <canvas
+          id="canvas"
+          width="720"
+          height="480"
+          aria-label="El Pollo Loco Spielfläche"
+        ></canvas>
+        <div class="control-hints" aria-hidden="true">
+          <div class="control-hints__group">
+            <span class="key">←</span>
+            <span class="key">→</span>
+            <span class="label">Bewegen</span>
+          </div>
+          <div class="control-hints__group">
+            <span class="key">SPACE</span>
+            <span class="label">Springen</span>
+          </div>
+          <div class="control-hints__group">
+            <span class="key">D</span>
+            <span class="label">Werfen</span>
+          </div>
+        </div>
+      </section>
+    </main>
   </body>
 </html>
