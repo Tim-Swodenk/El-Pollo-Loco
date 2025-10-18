@@ -2,11 +2,16 @@ let canvas;
 let world;
 let keyboard = new Keyboard();
 let hasGameStarted = false;
+let isGameOver = false;
 
 document.addEventListener("DOMContentLoaded", () => {
   const startButton = document.getElementById("start-button");
+  const restartButton = document.getElementById("restart-button");
   if (startButton) {
     startButton.addEventListener("click", startGame);
+  }
+  if (restartButton) {
+    restartButton.addEventListener("click", restartGame);
   }
 });
 
@@ -17,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function init() {
   canvas = document.getElementById("canvas");
   world = new World(canvas, keyboard);
+  world.setOnGameOver(handleGameOver);
 }
 
 /**
@@ -44,11 +50,42 @@ function startGame() {
 }
 
 /**
+ * Displays the game over screen and focuses the restart action.
+ * @returns {void}
+ */
+function handleGameOver() {
+  isGameOver = true;
+  const gameOverScreen = document.getElementById("game-over-screen");
+  const restartButton = document.getElementById("restart-button");
+  if (!gameOverScreen) {
+    return;
+  }
+  gameOverScreen.classList.remove("is-hidden");
+  gameOverScreen.removeAttribute("inert");
+  restartButton?.focus();
+}
+
+/**
+ * Reloads the page to restart the game.
+ * @returns {void}
+ */
+function restartGame() {
+  window.location.reload();
+}
+
+/**
  * Updates keyboard state on key press.
  * @param {KeyboardEvent} e - Keydown event.
  * @returns {void}
  */
 window.addEventListener("keydown", (e) => {
+  if (isGameOver) {
+    if (e.code === "Space" || e.code === "Enter") {
+      e.preventDefault();
+      restartGame();
+    }
+    return;
+  }
   if (!hasGameStarted && (e.code === "Space" || e.code === "Enter")) {
     e.preventDefault();
     startGame();
@@ -85,6 +122,9 @@ window.addEventListener("keydown", (e) => {
  * @returns {void}
  */
 window.addEventListener("keyup", (e) => {
+  if (isGameOver) {
+    return;
+  }
   if (e.keyCode == 39) {
     keyboard.RIGHT = false;
   }

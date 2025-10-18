@@ -82,6 +82,26 @@
           height="480"
           aria-label="El Pollo Loco Spielfläche"
         ></canvas>
+        <div
+          id="game-over-screen"
+          class="game-over is-hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="game-over-title"
+          inert
+        >
+          <div class="game-over__backdrop" aria-hidden="true"></div>
+          <div class="game-over__content">
+            <h2 id="game-over-title" class="game-over__title">Game Over</h2>
+            <p id="game-over-message" class="game-over__message">
+              Pepe wurde besiegt. Versuch es gleich noch einmal!
+            </p>
+            <button id="restart-button" class="game-over__button" type="button">
+              Nochmal spielen
+            </button>
+            <p class="game-over__hint">Drücke Enter oder Leertaste</p>
+          </div>
+        </div>
         <div class="control-hints" aria-hidden="true">
           <div class="control-hints__group">
             <span class="key">←</span>

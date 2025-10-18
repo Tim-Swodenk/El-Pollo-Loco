@@ -20,6 +20,11 @@ class World {
   collectedCoins = 0;
   maxCoins = 5;
   endboss = this.level.enemies.find((enemy) => enemy instanceof Endboss);
+  gameLoopIntervalId = null;
+  chickenSpawnerId = null;
+  cloudSpawnerId = null;
+  gameOverTriggered = false;
+  onGameOver = null;
 
   /**
    * Creates the game world.
@@ -42,12 +47,24 @@ class World {
    * @returns {void}
    */
   startChickenSpawner() {
-    setInterval(() => {
+    this.stopChickenSpawner();
+    this.chickenSpawnerId = setInterval(() => {
       if (this.camera_x < this.lastCameraX) {
         this.spawnChicken();
         this.lastCameraX = this.camera_x;
       }
     }, 3000);
+  }
+
+  /**
+   * Stops spawning chickens.
+   * @returns {void}
+   */
+  stopChickenSpawner() {
+    if (this.chickenSpawnerId) {
+      clearInterval(this.chickenSpawnerId);
+      this.chickenSpawnerId = null;
+    }
   }
 
   /**
@@ -88,8 +105,8 @@ class World {
       this.level.clouds.push(cloud);
       this.nextCloudSpawnX += cloud.width;
     }
-
-    setInterval(() => {
+    this.stopCloudSpawner();
+    this.cloudSpawnerId = setInterval(() => {
       this.level.clouds = this.level.clouds.filter((c) => c.x + c.width >= 0);
 
       let cloud = new Cloud(this.nextCloudSpawnX);
@@ -99,18 +116,86 @@ class World {
   }
 
   /**
+   * Stops spawning clouds.
+   * @returns {void}
+   */
+  stopCloudSpawner() {
+    if (this.cloudSpawnerId) {
+      clearInterval(this.cloudSpawnerId);
+      this.cloudSpawnerId = null;
+    }
+  }
+
+  /**
    * Starts the main game loop checking collisions and throws.
    * @returns {void}
    */
   run() {
-    setInterval(() => {
+    this.stopGameLoop();
+    this.gameLoopIntervalId = setInterval(() => {
       this.checkCollisionsStomping();
       this.checkCollisionsCharacter();
       this.checkCollisionsBottle();
       this.checkCollisionsCoins();
       this.checkThrowObjects();
       this.checkBottleHitsEndboss();
+      if (!this.gameOverTriggered && this.character.isDead()) {
+        this.triggerGameOver();
+      }
     }, 200);
+  }
+
+  /**
+   * Stops the main game loop interval.
+   * @returns {void}
+   */
+  stopGameLoop() {
+    if (this.gameLoopIntervalId) {
+      clearInterval(this.gameLoopIntervalId);
+      this.gameLoopIntervalId = null;
+    }
+  }
+
+  /**
+   * Registers a callback that is executed when the game is over.
+   * @param {() => void} callback - Callback to run.
+   * @returns {void}
+   */
+  setOnGameOver(callback) {
+    this.onGameOver = callback;
+  }
+
+  /**
+   * Stops movement, timers and triggers the game over callback.
+   * @returns {void}
+   */
+  triggerGameOver() {
+    if (this.gameOverTriggered) {
+      return;
+    }
+    this.gameOverTriggered = true;
+    this.stopGameLoop();
+    this.stopChickenSpawner();
+    this.stopCloudSpawner();
+    this.disablePlayerControl();
+    if (typeof this.onGameOver === "function") {
+      this.onGameOver();
+    }
+  }
+
+  /**
+   * Resets keyboard state to stop all movement.
+   * @returns {void}
+   */
+  disablePlayerControl() {
+    if (!this.keyboard) {
+      return;
+    }
+    Object.keys(this.keyboard).forEach((key) => {
+      this.keyboard[key] = false;
+    });
+    this.character.speed = 0;
+    this.character.speedY = 0;
   }
 
   /**

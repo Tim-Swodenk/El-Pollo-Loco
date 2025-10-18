@@ -136,10 +136,111 @@ ul {
 }
 
 .game-container {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
+}
+
+.game-over {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(16px, 5vw, 32px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  z-index: 2;
+}
+
+.game-over:not(.is-hidden) {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.game-over__backdrop {
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background: linear-gradient(
+      140deg,
+      rgba(17, 12, 41, 0.9),
+      rgba(246, 117, 40, 0.55)
+    ),
+    url("../assets/img/9_intro_outro_screens/outro/endscreen_2.png")
+      center/cover no-repeat;
+  filter: saturate(1.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  z-index: -2;
+}
+
+.game-over__content {
+  position: relative;
+  max-width: min(420px, 100%);
+  padding: clamp(24px, 6vw, 48px);
+  border-radius: 28px;
+  background: rgba(22, 15, 48, 0.85);
+  box-shadow: 0 32px 70px rgba(17, 12, 41, 0.65);
+  text-align: center;
+  display: grid;
+  gap: 18px;
+}
+
+.game-over__content::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(140deg, #ffe066, #f67528, #ff4d5a);
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.game-over__title {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 2.75rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.game-over__message {
+  margin: 0;
+  font-size: clamp(1rem, 2.6vw, 1.2rem);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.game-over__button {
+  justify-self: center;
+  padding: 14px 32px;
+  border-radius: 999px;
+  border: none;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #2c1b47;
+  background: linear-gradient(135deg, #ffe066, #f67528 55%, #ff4d5a);
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.35);
+}
+
+.game-over__button:focus,
+.game-over__button:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 24px 45px rgba(0, 0, 0, 0.4);
+}
+
+.game-over__hint {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .control-hints {
