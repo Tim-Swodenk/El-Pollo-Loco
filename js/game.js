@@ -85,11 +85,25 @@ function startGame() {
  * Shows the game over dialog and focuses the restart button.
  * @returns {void}
  */
-function handleGameOver() {
+function handleGameOver(reason = "loss") {
   isGameOver = true;
   let gameOverScreen = document.getElementById("game-over-screen");
   let restartButton = document.getElementById("restart-button");
+  let titleImage = document.querySelector(".game-over__title-image");
+  let message = document.getElementById("game-over-message");
   if (!gameOverScreen) return;
+
+  if (titleImage && message) {
+    if (reason === "win") {
+      titleImage.src = "./assets/img/You won, you lost/You Won B.png";
+      titleImage.alt = "You Win";
+      message.textContent = "Pepe defeated the endboss. The fiesta can begin!";
+    } else {
+      titleImage.src = "./assets/img/You won, you lost/Game Over.png";
+      titleImage.alt = "Game Over";
+      message.textContent = "Pepe was defeated. Give it another try!";
+    }
+  }
 
   gameOverScreen.classList.remove("is-hidden");
   gameOverScreen.removeAttribute("inert");

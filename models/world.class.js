@@ -164,7 +164,7 @@ class World {
       this.checkBottleHitsEndboss();
 
       if (!this.gameOverTriggered && this.character.isDead()) {
-        this.triggerGameOver();
+        this.triggerGameOver("loss");
       }
     }, 100);
   }
@@ -190,9 +190,10 @@ class World {
 
   /**
    * Stops movement, timers and triggers the game over callback.
+   * @param {"win"|"loss"} [reason="loss"] - Outcome that finished the game.
    * @returns {void}
    */
-  triggerGameOver() {
+  triggerGameOver(reason = "loss") {
     if (this.gameOverTriggered) return;
 
     this.gameOverTriggered = true;
@@ -203,7 +204,7 @@ class World {
     this.disablePlayerControl();
 
     if (typeof this.onGameOver === "function") {
-      this.onGameOver();
+      this.onGameOver(reason);
     }
   }
 
@@ -334,6 +335,10 @@ class World {
 
       endboss.hit();
       this.statusBarEndboss.setPercentage(endboss.energy);
+
+      if (!this.gameOverTriggered && endboss.energy <= 0) {
+        this.triggerGameOver("win");
+      }
     }
   }
 
