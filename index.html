@@ -34,7 +34,8 @@
     <script src="./models/level.class.js"></script>
     <script src="./levels/level1.js"></script>
 
-    <script src="./js/game.js"></script>
+    <!-- Wichtig: defer, damit Buttons/Canvas schon im DOM sind -->
+    <script src="./js/game.js" defer></script>
   </head>
   <body>
     <main class="game-wrapper">
@@ -71,17 +72,31 @@
           <p class="start-screen__hint">Oder drücke Enter/Leertaste</p>
         </div>
       </section>
+
       <section
         id="game-container"
         class="game-container is-hidden"
         aria-hidden="true"
       >
+        <!-- NEU: Anzeigeoptionen / Fullscreen -->
+        <div class="game-controls" aria-label="Anzeigeoptionen">
+          <button
+            id="fullscreen-button"
+            class="game-controls__button"
+            type="button"
+            aria-pressed="false"
+          >
+            Fullscreen
+          </button>
+        </div>
+
         <canvas
           id="canvas"
           width="720"
           height="480"
           aria-label="El Pollo Loco Spielfläche"
         ></canvas>
+
         <div
           id="game-over-screen"
           class="game-over is-hidden"
@@ -102,6 +117,7 @@
             <p class="game-over__hint">Drücke Enter oder Leertaste</p>
           </div>
         </div>
+
         <div class="control-hints" aria-hidden="true">
           <div class="control-hints__group">
             <span class="key">←</span>
