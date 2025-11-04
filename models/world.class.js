@@ -166,7 +166,7 @@ class World {
       if (!this.gameOverTriggered && this.character.isDead()) {
         this.triggerGameOver();
       }
-    }, 200);
+    }, 100);
   }
 
   /**
@@ -344,12 +344,12 @@ class World {
   draw = () => {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // background & clouds
+    //background & clouds
     this.ctx.translate(this.camera_x, 0);
     this.addObjectsToMap(this.level.backgroundObjects);
     this.addObjectsToMap(this.level.clouds);
 
-    // HUD
+    //HUD
     this.ctx.translate(-this.camera_x, 0);
     this.addToMap(this.statusBarHealth);
     this.addToMap(this.statusBarBottles);
@@ -363,7 +363,7 @@ class World {
       this.addToMap(this.statusBarEndboss);
     }
 
-    // foreground actors
+    //foreground actors
     this.ctx.translate(this.camera_x, 0);
     this.addToMap(this.character);
     this.addObjectsToMap(this.level.enemies);
@@ -371,7 +371,7 @@ class World {
     this.addObjectsToMap(this.level.collectableObjects);
     this.addObjectsToMap(this.level.coinObjects);
 
-    // reset transform for next frame
+    //reset transform for next frame
     this.ctx.translate(-this.camera_x, 0);
 
     requestAnimationFrame(this.draw);

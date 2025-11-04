@@ -72,11 +72,7 @@
         </div>
       </section>
 
-      <section
-        id="game-container"
-        class="game-container is-hidden"
-        aria-hidden="true"
-      >
+      <section id="game-container" class="game-container is-hidden">
         <canvas
           id="canvas"
           width="720"
@@ -103,7 +99,11 @@
         >
           <div class="game-over__backdrop" aria-hidden="true"></div>
           <div class="game-over__content">
-            <h2 id="game-over-title" class="game-over__title">Game Over</h2>
+            <img
+              class="game-over__title-image"
+              src="./assets/img/You won, you lost/Game Over.png"
+              alt="Game Over"
+            />
             <p id="game-over-message" class="game-over__message">
               Pepe was defeated. Give it another try!
             </p>
