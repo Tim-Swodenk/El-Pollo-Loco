@@ -58,11 +58,13 @@ class Character extends MovableObject {
    */
   constructor() {
     super().loadImage("assets/img/2_character_pepe/2_walk/W-21.png");
-    this.offset = { top: 140, right: 40, bottom: 20, left: 40 };
+
     this.loadImages(this.IMAGES_WALKING);
     this.loadImages(this.IMAGES_JUMPING);
     this.loadImages(this.IMAGES_DEAD);
     this.loadImages(this.IMAGES_HURT);
+    this.offset = { top: 140, right: 40, bottom: 20, left: 40 };
+
     this.applyGravity();
     this.animate();
   }

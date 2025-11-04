@@ -3,27 +3,27 @@
  * @extends MovableObject
  */
 class Endboss extends MovableObject {
-  // base stats & size
+  //base stats & size
   height = 400;
   width = 250;
   y = 60;
   energy = 100;
   speed = 15;
 
-  // animation + behavior
+  //animation + behavior
   animationMs = 200;
   animationIntervalId = null;
   behaviorInterval = null;
   visibilityCheckId = null;
 
-  // state flags
+  //state flags
   currentState = "wait";
   isPlayingSequence = false;
   isJumpAttackActive = false;
   activated = false;
   hurtOverlayUntil = 0;
 
-  // movement control
+  //movement control
   _moveId = 0;
   walkForwardDistance = 300;
   walkBackwardDistance = 300;
