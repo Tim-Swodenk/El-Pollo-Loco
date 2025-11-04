@@ -5,7 +5,6 @@
 class StatusBarBottles extends StatusBar {
   /**
    * Creates the bottle status bar and loads its images.
-   * Creates the bottle status bar.
    */
   constructor() {
     super(

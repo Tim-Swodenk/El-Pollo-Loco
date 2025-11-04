@@ -60,9 +60,9 @@ class DrawableObject {
    */
   loadImages(arr) {
     arr.forEach((path) => {
-      let img = new Image();
-      img.src = path;
-      this.imageCache[path] = img;
+      let image = new Image();
+      image.src = path;
+      this.imageCache[path] = image;
     });
   }
 }

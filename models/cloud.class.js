@@ -19,7 +19,7 @@ class Cloud extends MovableObject {
   static nextImageIndex = 0;
 
   /**
-   Creates a cloud at a fixed horizontal position.
+   *Creates a cloud at a fixed horizontal position.
    * @param {number} x - Horizontal position for the cloud.
    */
   constructor(x = 0) {

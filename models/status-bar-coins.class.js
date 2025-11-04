@@ -5,7 +5,6 @@
 class StatusBarCoins extends StatusBar {
   /**
    * Creates the coin status bar and loads its images.
-   * Creates the coin status bar.
    */
   constructor() {
     super(

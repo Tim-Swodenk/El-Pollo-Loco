@@ -5,7 +5,6 @@
 class StatusBarHealth extends StatusBar {
   /**
    * Creates the health status bar and loads its images.
-   * Creates the health status bar.
    */
   constructor() {
     super(

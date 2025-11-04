@@ -99,7 +99,6 @@ class Character extends MovableObject {
         this.jumpAnimation();
       } else {
         if (this.world.keyboard.RIGHT || this.world.keyboard.LEFT) {
-          //Walk animation
           this.playAnimation(this.IMAGES_WALKING);
         } else {
           this.currentImage = 0;
@@ -114,33 +113,31 @@ class Character extends MovableObject {
    * @returns {void}
    */
   jumpAnimation() {
-    let yStart = Character.GROUND_LEVEL;
-    let yPeak = -47.5;
-    let yEnd = Character.GROUND_LEVEL;
-
-    let images = this.IMAGES_JUMPING;
-
+    let groundStart = Character.GROUND_LEVEL;
+    let jumpPeak = -47.5;
+    let descentStart = Character.GROUND_LEVEL;
+    let sequence = this.IMAGES_JUMPING;
     let progress;
 
-    if (this.y <= yStart && this.y >= yPeak) {
-      progress = (yStart - this.y) / (yStart - yPeak);
-    } else if (this.y < yStart && this.y < yPeak) {
+    if (this.y <= groundStart && this.y >= jumpPeak) {
+      progress = (groundStart - this.y) / (groundStart - jumpPeak);
+    } else if (this.y < groundStart && this.y < jumpPeak) {
       progress = 1;
     } else {
-      progress = (this.y - yPeak) / (yEnd - yPeak);
+      progress = (this.y - jumpPeak) / (descentStart - jumpPeak);
       progress = 1 + progress;
     }
 
-    let frame;
+    let frameIndex;
 
     if (progress <= 1) {
-      frame = Math.round(progress * 3);
+      frameIndex = Math.round(progress * 3);
     } else {
-      frame = 3 + Math.round((progress - 1) * 5);
+      frameIndex = 3 + Math.round((progress - 1) * 5);
     }
-    frame = Math.max(0, Math.min(images.length - 1, frame));
+    frameIndex = Math.max(0, Math.min(sequence.length - 1, frameIndex));
 
-    this.img = this.imageCache[images[frame]];
+    this.img = this.imageCache[sequence[frameIndex]];
   }
 
   /**

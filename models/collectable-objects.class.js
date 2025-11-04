@@ -16,11 +16,10 @@ class Collectable extends MovableObject {
   }
 
   /**
-   *   * Plays the idle animation using the provided interval.
+   * Plays the idle animation using the provided interval.
    * @param {number} interval - Interval in milliseconds.
    * @returns {void}
    */
-
   animate(interval) {
     let i = 0;
     this.animationInterval = setInterval(() => {
@@ -39,11 +38,11 @@ class Collectable extends MovableObject {
       clearInterval(this.animationInterval);
     }
     if (this.world && this.world.level && arrayName) {
-      const arr = this.world.level[arrayName];
-      if (arr) {
-        const index = arr.indexOf(this);
+      let collection = this.world.level[arrayName];
+      if (collection) {
+        let index = collection.indexOf(this);
         if (index > -1) {
-          arr.splice(index, 1);
+          collection.splice(index, 1);
           this.world = null;
         }
       }

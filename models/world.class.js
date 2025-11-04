@@ -101,13 +101,13 @@ class World {
     this.nextCloudSpawnX = 0;
 
     for (let i = 0; i < 6; i++) {
-      const cloud = new Cloud(this.nextCloudSpawnX);
+      let cloud = new Cloud(this.nextCloudSpawnX);
       this.level.clouds.push(cloud);
       this.nextCloudSpawnX += cloud.width;
     }
     this.stopCloudSpawner();
     this.cloudSpawnerId = setInterval(() => {
-      this.level.clouds = this.level.clouds.filter((c) => c.x + c.width >= 0);
+      this.level.clouds = this.level.clouds.filter((cloud) => cloud.x + cloud.width >= 0);
 
       let cloud = new Cloud(this.nextCloudSpawnX);
       this.level.clouds.push(cloud);
@@ -324,7 +324,7 @@ class World {
     this.addObjectsToMap(this.level.backgroundObjects);
     this.addObjectsToMap(this.level.clouds);
 
-    this.ctx.translate(-this.camera_x, 0); //Back
+    this.ctx.translate(-this.camera_x, 0);
     this.addToMap(this.statusBarHealth);
     this.addToMap(this.statusBarBottles);
     this.addToMap(this.statusBarCoins);
@@ -335,7 +335,7 @@ class World {
     ) {
       this.addToMap(this.statusBarEndboss);
     }
-    this.ctx.translate(this.camera_x, 0); //Forward
+    this.ctx.translate(this.camera_x, 0);
 
     this.addToMap(this.character);
     this.addObjectsToMap(this.level.enemies);

@@ -1,5 +1,5 @@
 /**
- * Endboss – finaler Gegner am Levelende.
+ * Endboss – the final enemy encountered at the end of the level.
  * @extends MovableObject
  */
 class Endboss extends MovableObject {
@@ -108,16 +108,35 @@ class Endboss extends MovableObject {
   }
 
   // --- helpers ---
+  /**
+   * Delays execution for the specified time.
+   * @param {number} ms - Milliseconds to wait.
+   * @returns {Promise<void>} Resolves after the timeout.
+   */
   sleep(ms) {
     return new Promise((r) => setTimeout(r, ms));
   }
+  /**
+   * Updates the current sprite image from the cache.
+   * @param {string} path - Image path to load from the cache.
+   * @returns {void}
+   */
   setImage(path) {
     this.img = this.imageCache[path];
   }
+  /**
+   * Checks whether the boss is above ground level.
+   * @returns {boolean} True if the vertical position is above the ground threshold.
+   */
   isAboveGround() {
     return this.y < 60;
   }
 
+  /**
+   * Activates the boss once it becomes visible on screen.
+   * @param {number} [buffer=0] - Additional buffer around the viewport.
+   * @returns {void}
+   */
   activateWhenVisible(buffer = 0) {
     if (this.isOnScreen(this.world, buffer)) return this.activate();
     this.visibilityCheckId = setInterval(() => {
@@ -129,13 +148,23 @@ class Endboss extends MovableObject {
     }, 120);
   }
 
+  /**
+   * Determines whether the boss is inside the current viewport.
+   * @param {World} world - The game world instance.
+   * @param {number} [buffer=0] - Additional buffer around the viewport.
+   * @returns {boolean} True if visible within the viewport.
+   */
   isOnScreen(world, buffer = 0) {
     if (!world || !world.ctx) return false;
     let w = world.ctx.canvas.width;
-    let screenX = this.x + (world.camera_x || 0); // ggf. Vorzeichen anpassen
+    let screenX = this.x + (world.camera_x || 0);
     return screenX + this.width > -buffer && screenX < w + buffer;
   }
 
+  /**
+   * Starts animations and behavior once activated.
+   * @returns {void}
+   */
   activate() {
     if (this.activated) return;
     this.activated = true;
@@ -143,6 +172,10 @@ class Endboss extends MovableObject {
     this.startRandomBehavior();
   }
 
+  /**
+   * Starts the animation loop based on the current state.
+   * @returns {void}
+   */
   animate() {
     this.animationIntervalId = setInterval(() => {
       if (performance.now() < this.hurtOverlayUntil) {
@@ -168,6 +201,11 @@ class Endboss extends MovableObject {
     }, this.animationIntervalMs);
   }
 
+  /**
+   * Plays a sequence of actions sequentially.
+   * @param {string[]} sequence - Array of method names describing actions.
+   * @returns {Promise<void>} Resolves once the sequence completes.
+   */
   async playSequence(sequence) {
     for (let a of sequence) {
       if (this.currentState === "dead" || this.dead) break;
@@ -182,19 +220,29 @@ class Endboss extends MovableObject {
     }
   }
 
+  /**
+   * Initiates randomized behavior sequences at a fixed interval.
+   * @returns {void}
+   */
   startRandomBehavior() {
     this.behaviorInterval = setInterval(async () => {
       if (this.isPlayingSequence || this.dead) return;
       let seq =
         this.SEQUENCES[Math.floor(Math.random() * this.SEQUENCES.length)];
       this.isPlayingSequence = true;
-      console.log(seq);
 
       await this.playSequence(seq);
       this.isPlayingSequence = false;
     }, 1000);
   }
 
+  /**
+   * Moves horizontally over time while optionally reporting progress.
+   * @param {number} dx - Horizontal distance to travel.
+   * @param {number} duration - Duration of the movement in milliseconds.
+   * @param {(progress: number, elapsed: number) => void} [onProgress] - Optional progress callback.
+   * @returns {Promise<void>} Resolves when the movement ends or is cancelled.
+   */
   moveXOverTime(dx, duration, onProgress) {
     return new Promise((resolve) => {
       let start = performance.now(),
@@ -212,17 +260,30 @@ class Endboss extends MovableObject {
     });
   }
 
+  /**
+   * Cancels the current horizontal movement.
+   * @returns {void}
+   */
   cancelMove() {
     this._moveId++;
   }
 
   // --- states/actions ---
+  /**
+   * Enters the waiting state for a specified duration.
+   * @param {number} [ms=this.ACTION_DELAYS.wait] - Duration to wait in milliseconds.
+   * @returns {Promise<void>} Resolves after waiting.
+   */
   wait(ms = this.ACTION_DELAYS.wait) {
     this.currentState = "wait";
     this.playAnimation(this.IMAGES_WAIT);
     return this.sleep(ms);
   }
 
+  /**
+   * Walks forward (towards the player) over time.
+   * @returns {Promise<void>} Resolves after moving.
+   */
   walkForward() {
     this.currentState = "walkForward";
     this.playAnimation(this.IMAGES_WALK);
@@ -232,6 +293,10 @@ class Endboss extends MovableObject {
     );
   }
 
+  /**
+   * Walks backward away from the player.
+   * @returns {Promise<void>} Resolves after moving.
+   */
   walkBackward() {
     this.currentState = "walkBackward";
     this.playAnimation(this.IMAGES_WALK);
@@ -241,11 +306,19 @@ class Endboss extends MovableObject {
     );
   }
 
+  /**
+   * Switches to the alert animation.
+   * @returns {void}
+   */
   alert() {
     this.currentState = "alert";
     this.playAnimation(this.IMAGES_ALERT);
   }
 
+  /**
+   * Performs a close-range attack on the player.
+   * @returns {Promise<void>} Resolves when the attack sequence finishes.
+   */
   attack() {
     if (this.dead || this.currentState === "dead") return;
     this.currentState = "attack";
@@ -277,6 +350,10 @@ class Endboss extends MovableObject {
     });
   }
 
+  /**
+   * Executes a jumping attack covering a longer distance.
+   * @returns {Promise<void>} Resolves after the jump attack ends.
+   */
   async jumpAttack() {
     if (this.isJumpAttackActive) return;
     this.isJumpAttackActive = true;
@@ -301,6 +378,11 @@ class Endboss extends MovableObject {
     this.playAnimation(this.IMAGES_WAIT);
   }
 
+  /**
+   * Applies damage to the boss.
+   * @param {number} [damage=20] - Amount of damage to apply.
+   * @returns {void}
+   */
   hit(damage = 20) {
     super.hit(damage);
     if (this.energy <= 0) return this.die();
@@ -308,6 +390,10 @@ class Endboss extends MovableObject {
       performance.now() + this.IMAGES_HURT.length * this.animationIntervalMs;
   }
 
+  /**
+   * Handles the boss death sequence and removes it from the level.
+   * @returns {void}
+   */
   die() {
     this.hurtOverlayUntil = 0;
     this.isJumpAttackActive = false;
