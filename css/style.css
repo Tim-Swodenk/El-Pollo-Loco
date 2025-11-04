@@ -130,6 +130,31 @@ ul {
   box-shadow: 0 24px 45px rgba(0, 0, 0, 0.4);
 }
 
+.game-controls {
+  display: flex;
+}
+
+.game-controls__button {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #2c1b47;
+  background: linear-gradient(135deg, #ffe066, #f67528 55%, #ff4d5a);
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.3);
+}
+
+.game-controls__button:focus,
+.game-controls__button:hover {
+  transform: translateY(-1px) scale(1.015);
+  box-shadow: 0 20px 36px rgba(0, 0, 0, 0.35);
+}
+
 .start-screen__hint {
   font-size: 0.9rem;
   opacity: 0.85;
