@@ -3,23 +3,32 @@
  * @extends MovableObject
  */
 class Endboss extends MovableObject {
+  // base stats & size
   height = 400;
   width = 250;
   y = 60;
   energy = 100;
   speed = 15;
 
-  animationIntervalMs = 200;
-  animationIntervalId;
-
-  isPlayingSequence = false;
-  behaviorInterval;
-  isJumpAttackActive = false;
-  hurtOverlayUntil = 0;
-  activated = false;
+  // animation + behavior
+  animationMs = 200;
+  animationIntervalId = null;
+  behaviorInterval = null;
   visibilityCheckId = null;
 
+  // state flags
   currentState = "wait";
+  isPlayingSequence = false;
+  isJumpAttackActive = false;
+  activated = false;
+  hurtOverlayUntil = 0;
+
+  // movement control
+  _moveId = 0;
+  walkForwardDistance = 300;
+  walkBackwardDistance = 300;
+  attackDistance = 20;
+  jumpAttackDistance = 300;
 
   SEQUENCES = [
     ["alert", "jumpAttack", "walkBackward"],
@@ -27,11 +36,6 @@ class Endboss extends MovableObject {
     ["alert", "walkForward", "walkBackward"],
     ["walkForward", "alert", "attack", "walkBackward"],
   ];
-
-  walkForwardDistance = 300;
-  walkBackwardDistance = 300;
-  attackDistance = 20;
-  jumpAttackDistance = 300;
 
   ACTION_DELAYS = {
     walkForward: 1000,
@@ -99,46 +103,51 @@ class Endboss extends MovableObject {
     this.loadImages(this.IMAGES_JUMPATTACK);
     this.loadImages(this.IMAGES_HURT);
     this.loadImages(this.IMAGES_DEAD);
+
     this.x = 2550;
     this.spawnX = this.x;
-    this._moveId = 0;
     this.offset = { top: 80, right: 5, bottom: 5, left: 25 };
+
     this.applyGravity();
     this.activateWhenVisible(80);
   }
 
-  // --- helpers ---
   /**
-   * Delays execution for the specified time.
+   * Waits for a given number of milliseconds.
    * @param {number} ms - Milliseconds to wait.
-   * @returns {Promise<void>} Resolves after the timeout.
+   * @returns {Promise<void>}
    */
   sleep(ms) {
-    return new Promise((r) => setTimeout(r, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
+
   /**
-   * Updates the current sprite image from the cache.
-   * @param {string} path - Image path to load from the cache.
+   * Sets the current sprite from cache.
+   * @param {string} path - Image path.
    * @returns {void}
    */
   setImage(path) {
     this.img = this.imageCache[path];
   }
+
   /**
-   * Checks whether the boss is above ground level.
-   * @returns {boolean} True if the vertical position is above the ground threshold.
+   * True if vertical position is above ground level.
+   * @returns {boolean}
    */
   isAboveGround() {
     return this.y < 60;
   }
 
   /**
-   * Activates the boss once it becomes visible on screen.
-   * @param {number} [buffer=0] - Additional buffer around the viewport.
+   * Activate once the boss is visible in the viewport.
+   * @param {number} [buffer=0] - Extra pixels around the viewport.
    * @returns {void}
    */
   activateWhenVisible(buffer = 0) {
-    if (this.isOnScreen(this.world, buffer)) return this.activate();
+    if (this.isOnScreen(this.world, buffer)) {
+      this.activate();
+      return;
+    }
     this.visibilityCheckId = setInterval(() => {
       if (this.world && this.isOnScreen(this.world, buffer)) {
         clearInterval(this.visibilityCheckId);
@@ -149,20 +158,20 @@ class Endboss extends MovableObject {
   }
 
   /**
-   * Determines whether the boss is inside the current viewport.
-   * @param {World} world - The game world instance.
-   * @param {number} [buffer=0] - Additional buffer around the viewport.
-   * @returns {boolean} True if visible within the viewport.
+   * Checks if the boss is inside the camera view.
+   * @param {World} world - Game world.
+   * @param {number} [buffer=0] - Extra pixels around the viewport.
+   * @returns {boolean}
    */
   isOnScreen(world, buffer = 0) {
     if (!world || !world.ctx) return false;
-    let w = world.ctx.canvas.width;
-    let screenX = this.x + (world.camera_x || 0);
+    const w = world.ctx.canvas.width;
+    const screenX = this.x + (world.camera_x || 0);
     return screenX + this.width > -buffer && screenX < w + buffer;
   }
 
   /**
-   * Starts animations and behavior once activated.
+   * Starts animation and AI once activated.
    * @returns {void}
    */
   activate() {
@@ -173,7 +182,7 @@ class Endboss extends MovableObject {
   }
 
   /**
-   * Starts the animation loop based on the current state.
+   * Animation loop based on current state.
    * @returns {void}
    */
   animate() {
@@ -182,97 +191,113 @@ class Endboss extends MovableObject {
         this.playAnimation(this.IMAGES_HURT);
         return;
       }
-      if (
-        this.currentState === "walkForward" ||
-        this.currentState === "walkBackward" ||
-        this.currentState === "return"
-      ) {
-        this.playAnimation(this.IMAGES_WALK);
-      } else if (this.currentState === "wait")
-        this.playAnimation(this.IMAGES_WAIT);
-      else if (this.currentState === "alert")
-        this.playAnimation(this.IMAGES_ALERT);
-      else if (this.currentState === "attack")
-        this.playAnimation(this.IMAGES_ATTACK);
-      else if (this.currentState === "jumpAttack")
-        this.playAnimation(this.IMAGES_JUMPATTACK);
-      else if (this.currentState === "dead")
-        this.playAnimation(this.IMAGES_DEAD);
-    }, this.animationIntervalMs);
+
+      switch (this.currentState) {
+        case "walkForward":
+        case "walkBackward":
+        case "return":
+          this.playAnimation(this.IMAGES_WALK);
+          break;
+        case "wait":
+          this.playAnimation(this.IMAGES_WAIT);
+          break;
+        case "alert":
+          this.playAnimation(this.IMAGES_ALERT);
+          break;
+        case "attack":
+          this.playAnimation(this.IMAGES_ATTACK);
+          break;
+        case "jumpAttack":
+          this.playAnimation(this.IMAGES_JUMPATTACK);
+          break;
+        case "dead":
+          this.playAnimation(this.IMAGES_DEAD);
+          break;
+      }
+    }, this.animationMs);
   }
 
   /**
-   * Plays a sequence of actions sequentially.
-   * @param {string[]} sequence - Array of method names describing actions.
-   * @returns {Promise<void>} Resolves once the sequence completes.
+   * Plays a list of actions one after another.
+   * @param {string[]} sequence - Action names.
+   * @returns {Promise<void>}
    */
   async playSequence(sequence) {
-    for (let a of sequence) {
+    for (const name of sequence) {
       if (this.currentState === "dead" || this.dead) break;
-      if (typeof this[a] !== "function") continue;
-      let out = this[a]();
-      if (out instanceof Promise) await out;
-      else await this.sleep(this.ACTION_DELAYS[a] ?? 1000);
+      const fn = this[name];
+      if (typeof fn !== "function") continue;
+
+      const result = fn.call(this);
+      if (result instanceof Promise) {
+        await result;
+      } else {
+        await this.sleep(this.ACTION_DELAYS[name] ?? 1000);
+      }
     }
-    if (this.currentState !== "dead" && !this.dead) {
+
+    if (!this.dead && this.currentState !== "dead") {
       this.currentState = "wait";
       this.playAnimation(this.IMAGES_WAIT);
     }
   }
 
   /**
-   * Initiates randomized behavior sequences at a fixed interval.
+   * Periodically picks and plays a random behavior sequence.
    * @returns {void}
    */
   startRandomBehavior() {
     this.behaviorInterval = setInterval(async () => {
       if (this.isPlayingSequence || this.dead) return;
-      let seq =
-        this.SEQUENCES[Math.floor(Math.random() * this.SEQUENCES.length)];
-      this.isPlayingSequence = true;
 
+      const seq = this.SEQUENCES[(Math.random() * this.SEQUENCES.length) | 0];
+
+      this.isPlayingSequence = true;
       await this.playSequence(seq);
       this.isPlayingSequence = false;
     }, 1000);
   }
 
   /**
-   * Moves horizontally over time while optionally reporting progress.
-   * @param {number} dx - Horizontal distance to travel.
-   * @param {number} duration - Duration of the movement in milliseconds.
-   * @param {(progress: number, elapsed: number) => void} [onProgress] - Optional progress callback.
-   * @returns {Promise<void>} Resolves when the movement ends or is cancelled.
+   * Moves horizontally over a duration.
+   * @param {number} dx - Distance in pixels.
+   * @param {number} duration - Move time in ms.
+   * @param {(progress:number, elapsed:number)=>void} [onProgress] - Optional callback.
+   * @returns {Promise<void>}
    */
   moveXOverTime(dx, duration, onProgress) {
     return new Promise((resolve) => {
-      let start = performance.now(),
-        startX = this.x,
-        id = ++this._moveId;
-      let step = (now) => {
+      const start = performance.now();
+      const startX = this.x;
+      const id = ++this._moveId;
+
+      const step = (now) => {
         if (id !== this._moveId || this.dead) return resolve();
-        let p = Math.min((now - start) / duration, 1);
+
+        const p = Math.min((now - start) / duration, 1);
         this.x = startX + dx * p;
+
         if (onProgress) onProgress(p, now - start);
         if (p < 1) requestAnimationFrame(step);
         else resolve();
       };
+
       requestAnimationFrame(step);
     });
   }
 
   /**
-   * Cancels the current horizontal movement.
+   * Cancels the current horizontal motion.
    * @returns {void}
    */
   cancelMove() {
     this._moveId++;
   }
 
-  // --- states/actions ---
   /**
-   * Enters the waiting state for a specified duration.
-   * @param {number} [ms=this.ACTION_DELAYS.wait] - Duration to wait in milliseconds.
-   * @returns {Promise<void>} Resolves after waiting.
+   * Idles for a while.
+   * @param {number} [ms=this.ACTION_DELAYS.wait] - Duration in ms.
+   * @returns {Promise<void>}
    */
   wait(ms = this.ACTION_DELAYS.wait) {
     this.currentState = "wait";
@@ -281,8 +306,8 @@ class Endboss extends MovableObject {
   }
 
   /**
-   * Walks forward (towards the player) over time.
-   * @returns {Promise<void>} Resolves after moving.
+   * Walks toward the player.
+   * @returns {Promise<void>}
    */
   walkForward() {
     this.currentState = "walkForward";
@@ -294,8 +319,8 @@ class Endboss extends MovableObject {
   }
 
   /**
-   * Walks backward away from the player.
-   * @returns {Promise<void>} Resolves after moving.
+   * Walks away from the player.
+   * @returns {Promise<void>}
    */
   walkBackward() {
     this.currentState = "walkBackward";
@@ -307,7 +332,7 @@ class Endboss extends MovableObject {
   }
 
   /**
-   * Switches to the alert animation.
+   * Plays the alert animation.
    * @returns {void}
    */
   alert() {
@@ -316,24 +341,28 @@ class Endboss extends MovableObject {
   }
 
   /**
-   * Performs a close-range attack on the player.
-   * @returns {Promise<void>} Resolves when the attack sequence finishes.
+   * Short hop attack at close range.
+   * @returns {Promise<void>}
    */
   attack() {
     if (this.dead || this.currentState === "dead") return;
+
     this.currentState = "attack";
     this.currentImage = 0;
-    let c = this.world?.character,
-      bc = this.x + this.width * 0.5;
-    let cc = c ? c.x + c.width * 0.5 : bc + 1,
-      dir = cc >= bc ? 1 : -1;
+
+    const c = this.world?.character;
+    const bossCenter = this.x + this.width * 0.5;
+    const charCenter = c ? c.x + c.width * 0.5 : bossCenter + 1;
+    const dir = charCenter >= bossCenter ? 1 : -1;
 
     this.setImage(this.IMAGES_ATTACK[4]);
     this.speedY = Math.max(this.speedY, 18);
-    let dur = this.ACTION_DELAYS.attack,
-      dx = dir * this.attackDistance;
-    let apex = false,
-      lastY = this.y;
+
+    const dur = this.ACTION_DELAYS.attack;
+    const dx = dir * this.attackDistance;
+
+    let apex = false;
+    let lastY = this.y;
 
     return this.moveXOverTime(dx, dur, (p) => {
       if (!apex && this.y > lastY) {
@@ -351,19 +380,24 @@ class Endboss extends MovableObject {
   }
 
   /**
-   * Executes a jumping attack covering a longer distance.
-   * @returns {Promise<void>} Resolves after the jump attack ends.
+   * Long jump attack that covers distance.
+   * @returns {Promise<void>}
    */
   async jumpAttack() {
     if (this.isJumpAttackActive) return;
+
     this.isJumpAttackActive = true;
     this.currentState = "jumpAttack";
-    let duration = this.ACTION_DELAYS.jumpAttack,
-      dx = -this.jumpAttackDistance;
-    let apex = false,
-      lastY = this.y;
+
+    const duration = this.ACTION_DELAYS.jumpAttack;
+    const dx = -this.jumpAttackDistance;
+
+    let apex = false;
+    let lastY = this.y;
+
     this.setImage(this.IMAGES_JUMPATTACK[0]);
     this.jump();
+
     await this.moveXOverTime(dx, duration, (p) => {
       if (!apex && this.y > lastY) {
         this.setImage(this.IMAGES_JUMPATTACK[1]);
@@ -372,7 +406,9 @@ class Endboss extends MovableObject {
       lastY = this.y;
       if (p > 0.85) this.setImage(this.IMAGES_JUMPATTACK[2]);
     });
+
     this.isJumpAttackActive = false;
+
     if (this.currentState === "dead" || this.dead) return;
     this.currentState = "wait";
     this.playAnimation(this.IMAGES_WAIT);
@@ -380,38 +416,46 @@ class Endboss extends MovableObject {
 
   /**
    * Applies damage to the boss.
-   * @param {number} [damage=20] - Amount of damage to apply.
+   * @param {number} [damage=20] - Damage value.
    * @returns {void}
    */
   hit(damage = 20) {
     super.hit(damage);
-    if (this.energy <= 0) return this.die();
+    if (this.energy <= 0) {
+      this.die();
+      return;
+    }
     this.hurtOverlayUntil =
-      performance.now() + this.IMAGES_HURT.length * this.animationIntervalMs;
+      performance.now() + this.IMAGES_HURT.length * this.animationMs;
   }
 
   /**
-   * Handles the boss death sequence and removes it from the level.
+   * Death sequence and cleanup.
    * @returns {void}
    */
   die() {
     this.hurtOverlayUntil = 0;
     this.isJumpAttackActive = false;
     this.cancelMove();
+
     if (this.behaviorInterval) clearInterval(this.behaviorInterval);
     if (this.visibilityCheckId) {
       clearInterval(this.visibilityCheckId);
       this.visibilityCheckId = null;
     }
+
     this.currentState = "dead";
     this.currentImage = 0;
+
     setTimeout(() => {
       if (this.animationIntervalId) clearInterval(this.animationIntervalId);
       this.dead = true;
-      if (this.world?.level?.enemies) {
-        let i = this.world.level.enemies.indexOf(this);
-        if (i > -1) this.world.level.enemies.splice(i, 1);
+
+      const enemies = this.world?.level?.enemies;
+      if (enemies) {
+        const i = enemies.indexOf(this);
+        if (i > -1) enemies.splice(i, 1);
       }
-    }, this.IMAGES_DEAD.length * this.animationIntervalMs);
+    }, this.IMAGES_DEAD.length * this.animationMs);
   }
 }
