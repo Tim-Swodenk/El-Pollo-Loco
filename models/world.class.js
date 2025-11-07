@@ -84,11 +84,11 @@ class World {
     if (this.camera_x < -1700) return;
 
     const spawnX = -this.camera_x + this.canvas.width + 200;
-    const chicken = new Chicken();
-    chicken.x = spawnX;
-    chicken.world = this;
+    const enemy = Math.random() < 0.5 ? new Chicken() : new SmallChicken();
+    enemy.x = spawnX;
+    enemy.world = this;
 
-    this.level.enemies.push(chicken);
+    this.level.enemies.push(enemy);
   }
 
   /**
