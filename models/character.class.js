@@ -79,9 +79,12 @@ class Character extends MovableObject {
 
   isHurting = false;
   currentAnimation = null;
+  lastFrameChangeAt = 0;
   lastActiveAt = Date.now();
 
   static SLEEP_DELAY_MS = 15000;
+  static IDLE_FRAME_DURATION_MS = 140;
+  static LONG_IDLE_FRAME_DURATION_MS = 180;
 
   /**
    * Initializes the character and loads animations.
@@ -114,12 +117,21 @@ class Character extends MovableObject {
    * @param {string[]} images - Sequence of image paths to play.
    * @returns {void}
    */
-  playLoop(images) {
+  playLoop(images, frameDuration = 60) {
+    let now = Date.now();
+
     if (this.currentAnimation !== images) {
       this.currentAnimation = images;
       this.currentImage = 0;
+      this.lastFrameChangeAt = 0;
     }
-    this.playAnimation(images);
+
+    if (now - this.lastFrameChangeAt >= frameDuration) {
+      this.playAnimation(images);
+      this.lastFrameChangeAt = now;
+    } else if (this.img == null && images.length > 0) {
+      this.img = this.imageCache[images[0]];
+    }
   }
 
   /**
@@ -168,9 +180,15 @@ class Character extends MovableObject {
         } else {
           let idleTime = Date.now() - this.lastActiveAt;
           if (idleTime >= Character.SLEEP_DELAY_MS) {
-            this.playLoop(this.IMAGES_LONG_IDLE);
+            this.playLoop(
+              this.IMAGES_LONG_IDLE,
+              Character.LONG_IDLE_FRAME_DURATION_MS
+            );
           } else {
-            this.playLoop(this.IMAGES_IDLE);
+            this.playLoop(
+              this.IMAGES_IDLE,
+              Character.IDLE_FRAME_DURATION_MS
+            );
           }
         }
       }
