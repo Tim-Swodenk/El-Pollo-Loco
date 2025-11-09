@@ -99,6 +99,9 @@ let level1 = new Level(
     new CollectableBottle(),
     new CollectableBottle(),
     new CollectableBottle(),
+    new CollectableBottle(),
+    new CollectableBottle(),
+    new CollectableBottle(),
   ],
   [
     new CollectableCoin(),
