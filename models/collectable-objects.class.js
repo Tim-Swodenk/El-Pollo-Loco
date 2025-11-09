@@ -34,19 +34,23 @@ class Collectable extends MovableObject {
    * @returns {void}
    */
   collect(arrayName = this.arrayName) {
-    if (this.animationInterval) {
-      clearInterval(this.animationInterval);
-    }
-    if (this.world && this.world.level && arrayName) {
-      let collection = this.world.level[arrayName];
-      if (collection) {
-        let index = collection.indexOf(this);
-        if (index > -1) {
-          collection.splice(index, 1);
-          this.world = null;
-        }
-      }
-    }
+    this.stopAnimation();
+    if (!this.world || !this.world.level || !arrayName) return;
+    this.removeFromLevelArray(this.world.level[arrayName]);
+  }
+
+  stopAnimation() {
+    if (!this.animationInterval) return;
+    clearInterval(this.animationInterval);
+    this.animationInterval = null;
+  }
+
+  removeFromLevelArray(collection) {
+    if (!Array.isArray(collection)) return;
+    const index = collection.indexOf(this);
+    if (index === -1) return;
+    collection.splice(index, 1);
+    this.world = null;
   }
 }
 

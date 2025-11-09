@@ -95,21 +95,35 @@ class Endboss extends MovableObject {
 
   constructor() {
     super();
-    this.loadImage(this.IMAGES_ALERT[0]);
-    this.loadImages(this.IMAGES_WAIT);
-    this.loadImages(this.IMAGES_WALK);
-    this.loadImages(this.IMAGES_ALERT);
-    this.loadImages(this.IMAGES_ATTACK);
-    this.loadImages(this.IMAGES_JUMPATTACK);
-    this.loadImages(this.IMAGES_HURT);
-    this.loadImages(this.IMAGES_DEAD);
+    this.loadAllImages();
+    this.configureStartState();
+    this.applyGravity();
+    this.activateWhenVisible(80);
+  }
 
+  loadAllImages() {
+    this.loadImage(this.IMAGES_ALERT[0]);
+    for (const group of this.getImageGroups()) {
+      this.loadImages(group);
+    }
+  }
+
+  getImageGroups() {
+    return [
+      this.IMAGES_WAIT,
+      this.IMAGES_WALK,
+      this.IMAGES_ALERT,
+      this.IMAGES_ATTACK,
+      this.IMAGES_JUMPATTACK,
+      this.IMAGES_HURT,
+      this.IMAGES_DEAD,
+    ];
+  }
+
+  configureStartState() {
     this.x = 2550;
     this.spawnX = this.x;
     this.offset = { top: 80, right: 5, bottom: 5, left: 25 };
-
-    this.applyGravity();
-    this.activateWhenVisible(80);
   }
 
   /**
@@ -186,35 +200,37 @@ class Endboss extends MovableObject {
    * @returns {void}
    */
   animate() {
-    this.animationIntervalId = setInterval(() => {
-      if (performance.now() < this.hurtOverlayUntil) {
-        this.playAnimation(this.IMAGES_HURT);
-        return;
-      }
+    this.startAnimationTimer();
+  }
 
-      switch (this.currentState) {
-        case "walkForward":
-        case "walkBackward":
-        case "return":
-          this.playAnimation(this.IMAGES_WALK);
-          break;
-        case "wait":
-          this.playAnimation(this.IMAGES_WAIT);
-          break;
-        case "alert":
-          this.playAnimation(this.IMAGES_ALERT);
-          break;
-        case "attack":
-          this.playAnimation(this.IMAGES_ATTACK);
-          break;
-        case "jumpAttack":
-          this.playAnimation(this.IMAGES_JUMPATTACK);
-          break;
-        case "dead":
-          this.playAnimation(this.IMAGES_DEAD);
-          break;
-      }
-    }, this.animationMs);
+  startAnimationTimer() {
+    if (this.animationIntervalId) clearInterval(this.animationIntervalId);
+    this.animationIntervalId = setInterval(
+      () => this.performAnimationStep(),
+      this.animationMs
+    );
+  }
+
+  performAnimationStep() {
+    if (performance.now() < this.hurtOverlayUntil) {
+      this.playAnimation(this.IMAGES_HURT);
+      return;
+    }
+    this.playAnimation(this.getImagesForState(this.currentState));
+  }
+
+  getImagesForState(state) {
+    const map = {
+      walkForward: this.IMAGES_WALK,
+      walkBackward: this.IMAGES_WALK,
+      return: this.IMAGES_WALK,
+      wait: this.IMAGES_WAIT,
+      alert: this.IMAGES_ALERT,
+      attack: this.IMAGES_ATTACK,
+      jumpAttack: this.IMAGES_JUMPATTACK,
+      dead: this.IMAGES_DEAD,
+    };
+    return map[state] || this.IMAGES_WAIT;
   }
 
   /**
@@ -224,22 +240,31 @@ class Endboss extends MovableObject {
    */
   async playSequence(sequence) {
     for (const name of sequence) {
-      if (this.currentState === "dead" || this.dead) break;
-      const fn = this[name];
-      if (typeof fn !== "function") continue;
-
-      const result = fn.call(this);
-      if (result instanceof Promise) {
-        await result;
-      } else {
-        await this.sleep(this.ACTION_DELAYS[name] ?? 1000);
-      }
+      if (this.shouldStopSequence()) break;
+      await this.runSequenceAction(name);
     }
+    this.finishSequenceIfAlive();
+  }
 
-    if (!this.dead && this.currentState !== "dead") {
-      this.currentState = "wait";
-      this.playAnimation(this.IMAGES_WAIT);
+  shouldStopSequence() {
+    return this.currentState === "dead" || this.dead;
+  }
+
+  async runSequenceAction(name) {
+    const action = this[name];
+    if (typeof action !== "function") return;
+    const result = action.call(this);
+    if (result instanceof Promise) {
+      await result;
+      return;
     }
+    await this.sleep(this.ACTION_DELAYS[name] ?? 1000);
+  }
+
+  finishSequenceIfAlive() {
+    if (this.dead || this.currentState === "dead") return;
+    this.currentState = "wait";
+    this.playAnimation(this.IMAGES_WAIT);
   }
 
   /**
@@ -267,23 +292,25 @@ class Endboss extends MovableObject {
    */
   moveXOverTime(dx, duration, onProgress) {
     return new Promise((resolve) => {
-      const start = performance.now();
-      const startX = this.x;
-      const id = ++this._moveId;
-
+      const start = performance.now(), startX = this.x, id = ++this._moveId;
       const step = (now) => {
-        if (id !== this._moveId || this.dead) return resolve();
-
-        const p = Math.min((now - start) / duration, 1);
-        this.x = startX + dx * p;
-
-        if (onProgress) onProgress(p, now - start);
-        if (p < 1) requestAnimationFrame(step);
+        if (!this.shouldContinueMove(id)) return resolve();
+        const progress = Math.min((now - start) / duration, 1);
+        this.updateMovePosition(startX, dx, progress, onProgress, now - start);
+        if (progress < 1) requestAnimationFrame(step);
         else resolve();
       };
-
       requestAnimationFrame(step);
     });
+  }
+
+  shouldContinueMove(id) {
+    return id === this._moveId && !this.dead;
+  }
+
+  updateMovePosition(startX, dx, progress, onProgress, elapsed) {
+    this.x = startX + dx * progress;
+    if (onProgress) onProgress(progress, elapsed);
   }
 
   /**
@@ -346,37 +373,47 @@ class Endboss extends MovableObject {
    */
   attack() {
     if (this.dead || this.currentState === "dead") return;
+    this.prepareAttackState();
+    const context = { apex: false, lastY: this.y };
+    const motion = this.getAttackMotion();
+    return this.moveXOverTime(motion.dx, motion.duration, (p) =>
+      this.updateAttackDuringMove(context, p)
+    ).then(() => this.finishAttackState());
+  }
 
+  prepareAttackState() {
     this.currentState = "attack";
     this.currentImage = 0;
+  }
 
-    const c = this.world?.character;
+  getAttackMotion() {
+    const character = this.world?.character;
     const bossCenter = this.x + this.width * 0.5;
-    const charCenter = c ? c.x + c.width * 0.5 : bossCenter + 1;
+    const charCenter = character
+      ? character.x + character.width * 0.5
+      : bossCenter + 1;
     const dir = charCenter >= bossCenter ? 1 : -1;
-
     this.setImage(this.IMAGES_ATTACK[4]);
     this.speedY = Math.max(this.speedY, 18);
+    return {
+      dx: dir * this.attackDistance,
+      duration: this.ACTION_DELAYS.attack,
+    };
+  }
 
-    const dur = this.ACTION_DELAYS.attack;
-    const dx = dir * this.attackDistance;
+  updateAttackDuringMove(context, progress) {
+    if (!context.apex && this.y > context.lastY) {
+      this.setImage(this.IMAGES_ATTACK[5]);
+      context.apex = true;
+    }
+    context.lastY = this.y;
+    if (progress > 0.85) this.setImage(this.IMAGES_ATTACK[6]);
+  }
 
-    let apex = false;
-    let lastY = this.y;
-
-    return this.moveXOverTime(dx, dur, (p) => {
-      if (!apex && this.y > lastY) {
-        this.setImage(this.IMAGES_ATTACK[5]);
-        apex = true;
-      }
-      lastY = this.y;
-      if (p > 0.85) this.setImage(this.IMAGES_ATTACK[6]);
-    }).then(() => {
-      if (!this.dead) {
-        this.currentState = "wait";
-        this.playAnimation(this.IMAGES_WAIT);
-      }
-    });
+  finishAttackState() {
+    if (this.dead) return;
+    this.currentState = "wait";
+    this.playAnimation(this.IMAGES_WAIT);
   }
 
   /**
@@ -385,30 +422,35 @@ class Endboss extends MovableObject {
    */
   async jumpAttack() {
     if (this.isJumpAttackActive) return;
+    this.beginJumpAttack();
+    const context = { apex: false, lastY: this.y };
+    const duration = this.ACTION_DELAYS.jumpAttack;
+    await this.moveXOverTime(
+      -this.jumpAttackDistance,
+      duration,
+      (p) => this.updateJumpAttackDuringMove(context, p)
+    );
+    this.endJumpAttack();
+  }
 
+  beginJumpAttack() {
     this.isJumpAttackActive = true;
     this.currentState = "jumpAttack";
-
-    const duration = this.ACTION_DELAYS.jumpAttack;
-    const dx = -this.jumpAttackDistance;
-
-    let apex = false;
-    let lastY = this.y;
-
     this.setImage(this.IMAGES_JUMPATTACK[0]);
     this.jump();
+  }
 
-    await this.moveXOverTime(dx, duration, (p) => {
-      if (!apex && this.y > lastY) {
-        this.setImage(this.IMAGES_JUMPATTACK[1]);
-        apex = true;
-      }
-      lastY = this.y;
-      if (p > 0.85) this.setImage(this.IMAGES_JUMPATTACK[2]);
-    });
+  updateJumpAttackDuringMove(context, progress) {
+    if (!context.apex && this.y > context.lastY) {
+      this.setImage(this.IMAGES_JUMPATTACK[1]);
+      context.apex = true;
+    }
+    context.lastY = this.y;
+    if (progress > 0.85) this.setImage(this.IMAGES_JUMPATTACK[2]);
+  }
 
+  endJumpAttack() {
     this.isJumpAttackActive = false;
-
     if (this.currentState === "dead" || this.dead) return;
     this.currentState = "wait";
     this.playAnimation(this.IMAGES_WAIT);
@@ -437,25 +479,39 @@ class Endboss extends MovableObject {
     this.hurtOverlayUntil = 0;
     this.isJumpAttackActive = false;
     this.cancelMove();
+    this.stopBehaviorTimers();
+    this.enterDeathState();
+    this.scheduleDeathCleanup();
+  }
 
+  stopBehaviorTimers() {
     if (this.behaviorInterval) clearInterval(this.behaviorInterval);
     if (this.visibilityCheckId) {
       clearInterval(this.visibilityCheckId);
       this.visibilityCheckId = null;
     }
+  }
 
+  enterDeathState() {
     this.currentState = "dead";
     this.currentImage = 0;
+  }
 
-    setTimeout(() => {
-      if (this.animationIntervalId) clearInterval(this.animationIntervalId);
-      this.dead = true;
+  scheduleDeathCleanup() {
+    const delay = this.IMAGES_DEAD.length * this.animationMs;
+    setTimeout(() => this.finishDeath(), delay);
+  }
 
-      const enemies = this.world?.level?.enemies;
-      if (enemies) {
-        const i = enemies.indexOf(this);
-        if (i > -1) enemies.splice(i, 1);
-      }
-    }, this.IMAGES_DEAD.length * this.animationMs);
+  finishDeath() {
+    if (this.animationIntervalId) clearInterval(this.animationIntervalId);
+    this.dead = true;
+    this.removeFromWorld();
+  }
+
+  removeFromWorld() {
+    const enemies = this.world?.level?.enemies;
+    if (!enemies) return;
+    const index = enemies.indexOf(this);
+    if (index > -1) enemies.splice(index, 1);
   }
 }

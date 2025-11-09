@@ -35,22 +35,27 @@ class DrawableObject {
    * @returns {void}
    */
   drawFrame(ctx) {
-    if (
-      (this.offset && this instanceof Chicken) ||
+    if (!this.shouldDrawFrame()) return;
+    ctx.beginPath();
+    ctx.lineWidth = "2";
+    ctx.strokeStyle = "red";
+    const { left, right, top, bottom } = this.offset;
+    ctx.rect(
+      this.x + left,
+      this.y + top,
+      this.width - left - right,
+      this.height - top - bottom
+    );
+    ctx.stroke();
+  }
+
+  shouldDrawFrame() {
+    if (!this.offset) return false;
+    return (
+      this instanceof Chicken ||
       this instanceof Character ||
       this instanceof Endboss
-    ) {
-      ctx.beginPath();
-      ctx.lineWidth = "2";
-      ctx.strokeStyle = "red";
-      ctx.rect(
-        this.x + this.offset.left,
-        this.y + this.offset.top,
-        this.width - this.offset.left - this.offset.right,
-        this.height - this.offset.top - this.offset.bottom
-      );
-      ctx.stroke();
-    }
+    );
   }
 
   /**
