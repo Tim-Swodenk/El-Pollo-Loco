@@ -20,6 +20,9 @@ class World {
 
   lastCameraX = 0;
 
+  throwCooldownMs = 500;
+  lastThrowTime = 0;
+
   collectedBottles = 0;
   maxBottles = 5;
 
@@ -229,15 +232,17 @@ class World {
   checkThrowObjects() {
     if (!this.keyboard.D || this.collectedBottles <= 0) return;
 
-    const bottle = new ThrowableObject(
-      this.character.x,
-      this.character.y + 200
-    );
+    const now = Date.now();
+    if (now - this.lastThrowTime < this.throwCooldownMs) return;
+
+    let bottle = new ThrowableObject(this.character.x, this.character.y + 200);
     bottle.world = this;
     this.throwableObjects.push(bottle);
 
+    this.lastThrowTime = now;
+
     this.collectedBottles--;
-    const perc = (this.collectedBottles / this.maxBottles) * 100;
+    let perc = (this.collectedBottles / this.maxBottles) * 100;
     this.statusBarBottles.setPercentage(perc);
   }
 
