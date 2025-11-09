@@ -164,6 +164,7 @@ class World {
       this.checkCollisionsBottle();
       this.checkCollisionsCoins();
       this.checkThrowObjects();
+      this.checkBottleHitsRegularEnemies();
       this.checkBottleHitsEndboss();
 
       if (!this.gameOverTriggered && this.character.isDead()) {
@@ -333,11 +334,7 @@ class World {
       if (bottle.hasSplashed) continue;
       if (!bottle.isColliding(endboss)) continue;
 
-      bottle.hasSplashed = true;
-      clearInterval(bottle.animationInterval);
-      clearInterval(bottle.throwInterval);
-      clearInterval(bottle.gravityInterval);
-      bottle.playSplashAnimationOnce();
+      this.handleBottleImpact(bottle);
 
       endboss.hit();
       this.statusBarEndboss.setPercentage(endboss.energy);
@@ -346,6 +343,45 @@ class World {
         this.triggerGameOver("win");
       }
     }
+  }
+
+  /**
+   * Checks collisions between thrown bottles and regular enemies (chickens).
+   * @returns {void}
+   */
+  checkBottleHitsRegularEnemies() {
+    for (const bottle of this.throwableObjects) {
+      if (bottle.hasSplashed) continue;
+
+      for (const enemy of this.level.enemies) {
+        if (
+          enemy.dead ||
+          !(enemy instanceof Chicken || enemy instanceof SmallChicken)
+        ) {
+          continue;
+        }
+        if (!bottle.isColliding(enemy)) continue;
+
+        this.handleBottleImpact(bottle);
+        enemy.die();
+        break;
+      }
+    }
+  }
+
+  /**
+   * Stops bottle movement and starts the splash animation.
+   * @param {ThrowableObject} bottle - The bottle that hit something.
+   * @returns {void}
+   */
+  handleBottleImpact(bottle) {
+    if (bottle.hasSplashed) return;
+
+    bottle.hasSplashed = true;
+    clearInterval(bottle.animationInterval);
+    clearInterval(bottle.throwInterval);
+    clearInterval(bottle.gravityInterval);
+    bottle.playSplashAnimationOnce();
   }
 
   /**

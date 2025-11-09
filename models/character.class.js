@@ -32,6 +32,32 @@ class Character extends MovableObject {
     "assets/img/2_character_pepe/2_walk/W-26.png",
   ];
 
+  IMAGES_IDLE = [
+    "assets/img/2_character_pepe/1_idle/idle/I-1.png",
+    "assets/img/2_character_pepe/1_idle/idle/I-2.png",
+    "assets/img/2_character_pepe/1_idle/idle/I-3.png",
+    "assets/img/2_character_pepe/1_idle/idle/I-4.png",
+    "assets/img/2_character_pepe/1_idle/idle/I-5.png",
+    "assets/img/2_character_pepe/1_idle/idle/I-6.png",
+    "assets/img/2_character_pepe/1_idle/idle/I-7.png",
+    "assets/img/2_character_pepe/1_idle/idle/I-8.png",
+    "assets/img/2_character_pepe/1_idle/idle/I-9.png",
+    "assets/img/2_character_pepe/1_idle/idle/I-10.png",
+  ];
+
+  IMAGES_LONG_IDLE = [
+    "assets/img/2_character_pepe/1_idle/long_idle/I-11.png",
+    "assets/img/2_character_pepe/1_idle/long_idle/I-12.png",
+    "assets/img/2_character_pepe/1_idle/long_idle/I-13.png",
+    "assets/img/2_character_pepe/1_idle/long_idle/I-14.png",
+    "assets/img/2_character_pepe/1_idle/long_idle/I-15.png",
+    "assets/img/2_character_pepe/1_idle/long_idle/I-16.png",
+    "assets/img/2_character_pepe/1_idle/long_idle/I-17.png",
+    "assets/img/2_character_pepe/1_idle/long_idle/I-18.png",
+    "assets/img/2_character_pepe/1_idle/long_idle/I-19.png",
+    "assets/img/2_character_pepe/1_idle/long_idle/I-20.png",
+  ];
+
   IMAGES_JUMPING = [
     "assets/img/2_character_pepe/3_jump/J-31.png",
     "assets/img/2_character_pepe/3_jump/J-32.png",
@@ -52,6 +78,10 @@ class Character extends MovableObject {
   world;
 
   isHurting = false;
+  currentAnimation = null;
+  lastActiveAt = Date.now();
+
+  static SLEEP_DELAY_MS = 15000;
 
   /**
    * Initializes the character and loads animations.
@@ -63,10 +93,33 @@ class Character extends MovableObject {
     this.loadImages(this.IMAGES_JUMPING);
     this.loadImages(this.IMAGES_DEAD);
     this.loadImages(this.IMAGES_HURT);
+    this.loadImages(this.IMAGES_IDLE);
+    this.loadImages(this.IMAGES_LONG_IDLE);
     this.offset = { top: 140, right: 40, bottom: 20, left: 40 };
 
     this.applyGravity();
     this.animate();
+  }
+
+  /**
+   * Resets the idle timer to keep the character awake.
+   * @returns {void}
+   */
+  setActive() {
+    this.lastActiveAt = Date.now();
+  }
+
+  /**
+   * Ensures animation sequences restart when switching.
+   * @param {string[]} images - Sequence of image paths to play.
+   * @returns {void}
+   */
+  playLoop(images) {
+    if (this.currentAnimation !== images) {
+      this.currentAnimation = images;
+      this.currentImage = 0;
+    }
+    this.playAnimation(images);
   }
 
   /**
@@ -78,15 +131,22 @@ class Character extends MovableObject {
       if (this.world.keyboard.RIGHT && this.x < this.world.level.level_end_x) {
         this.moveRight();
         this.otherDirection = false;
+        this.setActive();
       }
 
       if (this.world.keyboard.LEFT && this.x > 0) {
         this.moveLeft();
         this.otherDirection = true;
+        this.setActive();
       }
 
       if (this.world.keyboard.SPACE && !this.isAboveGround()) {
         this.jump();
+        this.setActive();
+      }
+
+      if (this.world.keyboard.SPACE || this.world.keyboard.D) {
+        this.setActive();
       }
 
       this.world.camera_x = -this.x + 100;
@@ -94,17 +154,24 @@ class Character extends MovableObject {
 
     setInterval(() => {
       if (this.isDead()) {
-        this.playAnimation(this.IMAGES_DEAD);
+        this.playLoop(this.IMAGES_DEAD);
       } else if (this.isHurt()) {
-        this.playAnimation(this.IMAGES_HURT);
+        this.setActive();
+        this.playLoop(this.IMAGES_HURT);
       } else if (this.isAboveGround()) {
+        this.setActive();
         this.jumpAnimation();
       } else {
         if (this.world.keyboard.RIGHT || this.world.keyboard.LEFT) {
-          this.playAnimation(this.IMAGES_WALKING);
+          this.setActive();
+          this.playLoop(this.IMAGES_WALKING);
         } else {
-          this.currentImage = 0;
-          this.img = this.imageCache[this.IMAGES_WALKING[0]];
+          let idleTime = Date.now() - this.lastActiveAt;
+          if (idleTime >= Character.SLEEP_DELAY_MS) {
+            this.playLoop(this.IMAGES_LONG_IDLE);
+          } else {
+            this.playLoop(this.IMAGES_IDLE);
+          }
         }
       }
     }, 60);
@@ -115,6 +182,10 @@ class Character extends MovableObject {
    * @returns {void}
    */
   jumpAnimation() {
+    if (this.currentAnimation !== this.IMAGES_JUMPING) {
+      this.currentAnimation = this.IMAGES_JUMPING;
+      this.currentImage = 0;
+    }
     let groundStart = Character.GROUND_LEVEL;
     let jumpPeak = -47.5;
     let descentStart = Character.GROUND_LEVEL;
