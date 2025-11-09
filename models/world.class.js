@@ -89,9 +89,21 @@ class World {
     const spawnX = -this.camera_x + this.canvas.width + 200;
     const enemy = Math.random() < 0.5 ? new Chicken() : new SmallChicken();
     enemy.x = spawnX;
-    enemy.world = this;
+    this.registerEnemy(enemy);
 
     this.level.enemies.push(enemy);
+  }
+
+  /**
+   * Assigns the world to the enemy and starts its behaviour if supported.
+   * @param {MovableObject} enemy - Enemy to register.
+   * @returns {void}
+   */
+  registerEnemy(enemy) {
+    enemy.world = this;
+    if (typeof enemy.startBehavior === "function") {
+      enemy.startBehavior();
+    }
   }
 
   /**
@@ -102,7 +114,7 @@ class World {
     this.character.world = this;
 
     for (const enemy of this.level.enemies) {
-      enemy.world = this;
+      this.registerEnemy(enemy);
     }
     for (const obj of this.level.collectableObjects) {
       obj.world = this;

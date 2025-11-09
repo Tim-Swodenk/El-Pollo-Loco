@@ -14,6 +14,10 @@ class Chicken extends MovableObject {
 
   IMAGES_DEAD = ["assets/img/3_enemies_chicken/chicken_normal/2_dead/dead.png"];
 
+  moveInterval = null;
+  walkInterval = null;
+  isActive = false;
+
   /**
    * Creates an enemy chicken with random position and speed.
    */
@@ -27,15 +31,17 @@ class Chicken extends MovableObject {
     this.x = 300 + Math.random() * (2000 - this.width);
     this.speed = 0.15 + Math.random() * 0.5;
     this.offset = { top: 5, right: 5, bottom: 5, left: 5 };
-
-    this.animate();
   }
 
   /**
-   * Moves the chicken and plays walking animation.
+   * Starts movement and walking animation once the game is running.
    * @returns {void}
    */
-  animate() {
+  startBehavior() {
+    if (this.isActive) return;
+
+    this.isActive = true;
+
     this.moveInterval = setInterval(() => {
       this.moveLeft();
     }, 1000 / 60);
@@ -46,17 +52,28 @@ class Chicken extends MovableObject {
   }
 
   /**
+   * Stops movement and animation intervals.
+   * @returns {void}
+   */
+  stopBehavior() {
+    if (this.moveInterval) {
+      clearInterval(this.moveInterval);
+      this.moveInterval = null;
+    }
+    if (this.walkInterval) {
+      clearInterval(this.walkInterval);
+      this.walkInterval = null;
+    }
+    this.isActive = false;
+  }
+
+  /**
    * Handles the death of the chicken.
    * Stops all animations, shows the dead sprite and removes the chicken.
    * @returns {void}
    */
   die() {
-    if (this.moveInterval) {
-      clearInterval(this.moveInterval);
-    }
-    if (this.walkInterval) {
-      clearInterval(this.walkInterval);
-    }
+    this.stopBehavior();
     this.speed = 0;
     this.loadImage(this.IMAGES_DEAD[0]);
     this.dead = true;
