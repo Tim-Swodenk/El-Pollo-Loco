@@ -8,35 +8,48 @@ let isGameOver = false;
 const BASE_W = 720;
 const BASE_H = 480;
 
-document.addEventListener("DOMContentLoaded", () => {
-  let startButton = document.getElementById("start-button");
-  let restartButton = document.getElementById("restart-button");
-  let fullscreenButton = document.getElementById("fullscreen-button");
-  let exitButton = document.getElementById("exit-button");
+document.addEventListener("DOMContentLoaded", initGameUI);
 
-  if (startButton) {
-    startButton.addEventListener("click", startGame);
-  }
-  if (restartButton) {
-    restartButton.addEventListener("click", restartGame);
-  }
-  if (fullscreenButton) {
-    fullscreenButton.addEventListener("click", toggleFullscreen);
-  }
-  if (exitButton) {
-    exitButton.addEventListener("click", exitToHome);
-  }
-
-  // Observe layout changes that may affect the canvas size
-  document.addEventListener("fullscreenchange", onLayoutChange);
-  document.addEventListener("webkitfullscreenchange", onLayoutChange);
-  document.addEventListener("mozfullscreenchange", onLayoutChange);
-  document.addEventListener("MSFullscreenChange", onLayoutChange);
-  window.addEventListener("resize", onLayoutChange);
-
+function initGameUI() {
+  let buttons = getButtons();
+  bindPrimaryButtons(buttons);
+  registerLayoutObservers();
   updateFullscreenButtonState();
   fitCanvasToScreen();
-});
+}
+
+function getButtons() {
+  return {
+    start: document.getElementById("start-button"),
+    restart: document.getElementById("restart-button"),
+    fullscreen: document.getElementById("fullscreen-button"),
+    exit: document.getElementById("exit-button"),
+  };
+}
+
+function bindPrimaryButtons(buttons) {
+  bindButton(buttons.start, startGame);
+  bindButton(buttons.restart, restartGame);
+  bindButton(buttons.fullscreen, toggleFullscreen);
+  bindButton(buttons.exit, exitToHome);
+}
+
+function bindButton(button, handler) {
+  button?.addEventListener("click", handler);
+}
+
+function registerLayoutObservers() {
+  let fullscreenEvents = [
+    "fullscreenchange",
+    "webkitfullscreenchange",
+    "mozfullscreenchange",
+    "MSFullscreenChange",
+  ];
+  fullscreenEvents.forEach((event) =>
+    document.addEventListener(event, onLayoutChange)
+  );
+  window.addEventListener("resize", onLayoutChange);
+}
 
 /**
  * Handles any change in layout or fullscreen state.
@@ -70,19 +83,30 @@ function init() {
  */
 function startGame() {
   if (hasGameStarted) return;
+  let ui = getGameScreens();
+  hideStartScreen(ui.startScreen, ui.startButton);
+  showGameContainer(ui.gameContainer);
+  init();
+  hasGameStarted = true;
+}
 
-  let startScreen = document.getElementById("start-screen");
-  let gameContainer = document.getElementById("game-container");
-  let startButton = document.getElementById("start-button");
+function getGameScreens() {
+  return {
+    startScreen: document.getElementById("start-screen"),
+    gameContainer: document.getElementById("game-container"),
+    startButton: document.getElementById("start-button"),
+  };
+}
 
+function hideStartScreen(startScreen, startButton) {
   startButton?.blur();
   startScreen?.classList.add("is-hidden");
   startScreen?.setAttribute("inert", "");
+}
+
+function showGameContainer(gameContainer) {
   gameContainer?.classList.remove("is-hidden");
   gameContainer?.removeAttribute("inert");
-
-  init();
-  hasGameStarted = true;
 }
 
 /**
@@ -91,27 +115,48 @@ function startGame() {
  */
 function handleGameOver(reason = "loss") {
   isGameOver = true;
-  let gameOverScreen = document.getElementById("game-over-screen");
-  let restartButton = document.getElementById("restart-button");
-  let titleImage = document.querySelector(".game-over__title-image");
-  let message = document.getElementById("game-over-message");
-  if (!gameOverScreen) return;
+  let elements = getGameOverElements();
+  if (!elements.screen) return;
+  updateGameOverContent(elements, reason);
+  revealGameOverScreen(elements);
+}
 
-  if (titleImage && message) {
-    if (reason === "win") {
-      titleImage.src = "./assets/img/You won, you lost/You Won B.png";
-      titleImage.alt = "You Win";
-      message.textContent = "Pepe defeated the endboss. The fiesta can begin!";
-    } else {
-      titleImage.src = "./assets/img/You won, you lost/Game Over.png";
-      titleImage.alt = "Game Over";
-      message.textContent = "Pepe was defeated. Give it another try!";
-    }
+function getGameOverElements() {
+  return {
+    screen: document.getElementById("game-over-screen"),
+    restartButton: document.getElementById("restart-button"),
+    titleImage: document.querySelector(".game-over__title-image"),
+    message: document.getElementById("game-over-message"),
+  };
+}
+
+function updateGameOverContent(elements, reason) {
+  if (!elements.titleImage || !elements.message) return;
+  let content = getGameOverContent(reason);
+  elements.titleImage.src = content.src;
+  elements.titleImage.alt = content.alt;
+  elements.message.textContent = content.text;
+}
+
+function getGameOverContent(reason) {
+  if (reason === "win") {
+    return {
+      src: "./assets/img/You won, you lost/You Won B.png",
+      alt: "You Win",
+      text: "Pepe defeated the endboss. The fiesta can begin!",
+    };
   }
+  return {
+    src: "./assets/img/You won, you lost/Game Over.png",
+    alt: "Game Over",
+    text: "Pepe was defeated. Give it another try!",
+  };
+}
 
-  gameOverScreen.classList.remove("is-hidden");
-  gameOverScreen.removeAttribute("inert");
-  restartButton?.focus();
+function revealGameOverScreen(elements) {
+  elements.screen.classList.remove("is-hidden");
+  elements.screen.removeAttribute("inert");
+  elements.restartButton?.focus();
 }
 
 /**
@@ -127,42 +172,67 @@ function restartGame() {
  * @returns {void}
  */
 function exitToHome() {
-  let startScreen = document.getElementById("start-screen");
-  let gameContainer = document.getElementById("game-container");
-  let gameOverScreen = document.getElementById("game-over-screen");
-  let exitButton = document.getElementById("exit-button");
-  let startButton = document.getElementById("start-button");
+  let ui = getExitElements();
+  ui.exitButton?.blur();
+  exitFullscreenIfNeeded();
+  resetWorldState();
+  resetUiState(ui);
+  updateFullscreenButtonState();
+}
 
-  exitButton?.blur();
+function getExitElements() {
+  return {
+    startScreen: document.getElementById("start-screen"),
+    gameContainer: document.getElementById("game-container"),
+    gameOverScreen: document.getElementById("game-over-screen"),
+    exitButton: document.getElementById("exit-button"),
+    startButton: document.getElementById("start-button"),
+  };
+}
 
-  if (isFullscreenActive()) {
-    exitFullscreen();
-  }
+function exitFullscreenIfNeeded() {
+  if (isFullscreenActive()) exitFullscreen();
+}
 
-  if (world) {
-    world.destroy();
-    world = null;
-  }
-
-  if (typeof createLevel1 === "function") {
-    level1 = createLevel1();
-  }
-
+function resetWorldState() {
+  destroyWorld();
+  recreateLevel();
   keyboard = new Keyboard();
   hasGameStarted = false;
   isGameOver = false;
+}
 
+function destroyWorld() {
+  if (!world) return;
+  world.destroy();
+  world = null;
+}
+
+function recreateLevel() {
+  if (typeof createLevel1 !== "function") return;
+  level1 = createLevel1();
+}
+
+function resetUiState(ui) {
+  hideGameOverScreen(ui.gameOverScreen);
+  showStartScreen(ui.startScreen);
+  hideGameContainer(ui.gameContainer);
+  ui.startButton?.focus();
+}
+
+function hideGameOverScreen(gameOverScreen) {
   gameOverScreen?.classList.add("is-hidden");
   gameOverScreen?.setAttribute("inert", "");
+}
 
+function showStartScreen(startScreen) {
   startScreen?.classList.remove("is-hidden");
   startScreen?.removeAttribute("inert");
+}
+
+function hideGameContainer(gameContainer) {
   gameContainer?.classList.add("is-hidden");
   gameContainer?.setAttribute("inert", "");
-
-  startButton?.focus();
-
-  updateFullscreenButtonState();
 }
 
 /**
@@ -173,42 +243,65 @@ function exitToHome() {
 function fitCanvasToScreen() {
   let el = document.getElementById("canvas");
   if (!el) return;
-
   let dpr = window.devicePixelRatio || 1;
-
   if (isFullscreenActive()) {
-    let w = window.innerWidth;
-    let h = window.innerHeight;
-    let targetW = Math.min(w, h * (BASE_W / BASE_H));
-    let targetH = Math.min(h, w * (BASE_H / BASE_W));
-
-    el.style.width = `${targetW}px`;
-    el.style.height = `${targetH}px`;
-
-    let renderW = Math.round(targetW * dpr);
-    let renderH = Math.round(targetH * dpr);
-    if (el.width !== renderW || el.height !== renderH) {
-      el.width = renderW;
-      el.height = renderH;
-    }
-
-    let scale = targetW / BASE_W;
-    let ctx = el.getContext("2d");
-    ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+    fitCanvasFullscreen(el, dpr);
   } else {
-    el.style.width = "";
-    el.style.height = "";
-
-    let renderW = Math.round(BASE_W * dpr);
-    let renderH = Math.round(BASE_H * dpr);
-    if (el.width !== renderW || el.height !== renderH) {
-      el.width = renderW;
-      el.height = renderH;
-    }
-
-    let ctx = el.getContext("2d");
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    fitCanvasWindowed(el, dpr);
   }
+}
+
+function fitCanvasFullscreen(el, dpr) {
+  let size = getFullscreenCanvasSize();
+  setCanvasStyle(el, size.targetW, size.targetH);
+  let render = getRenderSize(size, dpr);
+  updateCanvasResolution(el, render.width, render.height);
+  applyCanvasScale(el, size.targetW / BASE_W, dpr);
+}
+
+function getFullscreenCanvasSize() {
+  let w = window.innerWidth;
+  let h = window.innerHeight;
+  let ratio = BASE_W / BASE_H;
+  return {
+    targetW: Math.min(w, h * ratio),
+    targetH: Math.min(h, w / ratio),
+  };
+}
+
+function setCanvasStyle(el, width, height) {
+  el.style.width = `${width}px`;
+  el.style.height = `${height}px`;
+}
+
+function getRenderSize(size, dpr) {
+  return {
+    width: Math.round(size.targetW * dpr),
+    height: Math.round(size.targetH * dpr),
+  };
+}
+
+function updateCanvasResolution(el, width, height) {
+  if (el.width === width && el.height === height) return;
+  el.width = width;
+  el.height = height;
+}
+
+function applyCanvasScale(el, scale, dpr) {
+  let ctx = el.getContext("2d");
+  ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+}
+
+function fitCanvasWindowed(el, dpr) {
+  clearCanvasStyle(el);
+  let render = getRenderSize({ targetW: BASE_W, targetH: BASE_H }, dpr);
+  updateCanvasResolution(el, render.width, render.height);
+  applyCanvasScale(el, 1, dpr);
+}
+
+function clearCanvasStyle(el) {
+  el.style.width = "";
+  el.style.height = "";
 }
 
 /**
@@ -216,48 +309,65 @@ function fitCanvasToScreen() {
  * @param {KeyboardEvent} e - The keyboard event.
  * @returns {void}
  */
-window.addEventListener("keydown", (e) => {
-  if (isGameOver) {
-    if (e.code === "Space" || e.code === "Enter") {
-      e.preventDefault();
-      restartGame();
-    } else if (e.code === "Escape") {
-      e.preventDefault();
-      exitToHome();
-    }
-    return;
-  }
-  if (hasGameStarted && e.code === "Escape") {
-    e.preventDefault();
-    exitToHome();
-    return;
-  }
-  if (!hasGameStarted && (e.code === "Space" || e.code === "Enter")) {
-    e.preventDefault();
-    startGame();
-    return;
-  }
-  if (e.keyCode == 39) keyboard.RIGHT = true;
-  if (e.keyCode == 37) keyboard.LEFT = true;
-  if (e.keyCode == 38) keyboard.UP = true;
-  if (e.keyCode == 40) keyboard.DOWN = true;
-  if (e.keyCode == 32) keyboard.SPACE = true;
-  if (e.keyCode == 68) keyboard.D = true;
-});
+window.addEventListener("keydown", onKeyDown);
 
 /**
  * Handles keyboard keyup events.
  * @param {KeyboardEvent} e - The keyboard event.
  * @returns {void}
  */
-window.addEventListener("keyup", (e) => {
-  if (e.keyCode == 39) keyboard.RIGHT = false;
-  if (e.keyCode == 37) keyboard.LEFT = false;
-  if (e.keyCode == 38) keyboard.UP = false;
-  if (e.keyCode == 40) keyboard.DOWN = false;
-  if (e.keyCode == 32) keyboard.SPACE = false;
-  if (e.keyCode == 68) keyboard.D = false;
-});
+window.addEventListener("keyup", onKeyUp);
+
+function onKeyDown(e) {
+  if (handleGameOverKeys(e)) return;
+  if (handleStartStopKeys(e)) return;
+  updateMovementState(e, true);
+}
+
+function handleGameOverKeys(e) {
+  if (!isGameOver) return false;
+  if (["Space", "Enter"].includes(e.code)) {
+    e.preventDefault();
+    restartGame();
+    return true;
+  }
+  if (e.code === "Escape") {
+    e.preventDefault();
+    exitToHome();
+  }
+  return true;
+}
+
+function handleStartStopKeys(e) {
+  if (!hasGameStarted && ["Space", "Enter"].includes(e.code)) {
+    e.preventDefault();
+    startGame();
+    return true;
+  }
+  if (hasGameStarted && e.code === "Escape") {
+    e.preventDefault();
+    exitToHome();
+    return true;
+  }
+  return false;
+}
+
+function updateMovementState(e, isPressed) {
+  let mapping = {
+    39: "RIGHT",
+    37: "LEFT",
+    38: "UP",
+    40: "DOWN",
+    32: "SPACE",
+    68: "D",
+  };
+  let key = mapping[e.keyCode];
+  if (key) keyboard[key] = isPressed;
+}
+
+function onKeyUp(e) {
+  updateMovementState(e, false);
+}
 
 /**
  * Toggles fullscreen mode for the game container.
