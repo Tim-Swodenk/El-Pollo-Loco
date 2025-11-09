@@ -266,7 +266,8 @@ class World {
    */
   checkCollisionsStomping() {
     for (const enemy of this.level.enemies) {
-      if (!(enemy instanceof Chicken)) continue;
+      if (!(enemy instanceof Chicken || enemy instanceof SmallChicken))
+        continue;
       if (enemy.dead) continue;
 
       if (MovableObject.isTopBottomCollision(this.character, enemy)) {
