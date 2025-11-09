@@ -6,6 +6,7 @@ body {
   margin: 0;
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   font-family: "Poppins", "Segoe UI", Tahoma, Geneva, sans-serif;
@@ -16,6 +17,12 @@ body {
     #f67528 35%,
     #2c1b47 100%
   );
+}
+
+.legal-page {
+  justify-content: flex-start;
+  align-items: stretch;
+  padding: 32px 16px;
 }
 
 h1,
@@ -37,6 +44,47 @@ ul {
   justify-content: center;
   align-items: center;
   gap: 32px;
+}
+
+.legal-page__container {
+  width: min(720px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 24px;
+  background: rgba(17, 12, 41, 0.8);
+  padding: clamp(24px, 5vw, 48px);
+  border-radius: 24px;
+  box-shadow: 0 30px 60px rgba(44, 27, 71, 0.45);
+}
+
+.legal-page__container h1,
+.legal-page__container h2 {
+  font-weight: 700;
+}
+
+.legal-page__container a {
+  color: #ffe066;
+}
+
+.legal-page__back-link {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffe066, #f67528 55%, #ff4d5a);
+  color: #2c1b47;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.3);
+}
+
+.legal-page__back-link:hover,
+.legal-page__back-link:focus {
+  transform: translateY(-1px) scale(1.015);
+  box-shadow: 0 20px 36px rgba(0, 0, 0, 0.35);
 }
 
 .start-screen {
@@ -164,6 +212,26 @@ ul {
 .start-screen__hint {
   font-size: 0.9rem;
   opacity: 0.85;
+}
+
+.site-footer {
+  width: 100%;
+  padding: 24px 16px 40px;
+  display: flex;
+  justify-content: center;
+}
+
+.site-footer__link {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition: color 150ms ease;
+}
+
+.site-footer__link:hover,
+.site-footer__link:focus {
+  color: #ffe066;
 }
 
 .game-container {
