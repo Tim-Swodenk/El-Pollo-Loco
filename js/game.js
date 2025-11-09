@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let startButton = document.getElementById("start-button");
   let restartButton = document.getElementById("restart-button");
   let fullscreenButton = document.getElementById("fullscreen-button");
+  let exitButton = document.getElementById("exit-button");
 
   if (startButton) {
     startButton.addEventListener("click", startGame);
@@ -21,6 +22,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (fullscreenButton) {
     fullscreenButton.addEventListener("click", toggleFullscreen);
+  }
+  if (exitButton) {
+    exitButton.addEventListener("click", exitToHome);
   }
 
   // Observe layout changes that may affect the canvas size
@@ -119,6 +123,49 @@ function restartGame() {
 }
 
 /**
+ * Returns to the start screen and cleans up the current game instance.
+ * @returns {void}
+ */
+function exitToHome() {
+  let startScreen = document.getElementById("start-screen");
+  let gameContainer = document.getElementById("game-container");
+  let gameOverScreen = document.getElementById("game-over-screen");
+  let exitButton = document.getElementById("exit-button");
+  let startButton = document.getElementById("start-button");
+
+  exitButton?.blur();
+
+  if (isFullscreenActive()) {
+    exitFullscreen();
+  }
+
+  if (world) {
+    world.destroy();
+    world = null;
+  }
+
+  if (typeof createLevel1 === "function") {
+    level1 = createLevel1();
+  }
+
+  keyboard = new Keyboard();
+  hasGameStarted = false;
+  isGameOver = false;
+
+  gameOverScreen?.classList.add("is-hidden");
+  gameOverScreen?.setAttribute("inert", "");
+
+  startScreen?.classList.remove("is-hidden");
+  startScreen?.removeAttribute("inert");
+  gameContainer?.classList.add("is-hidden");
+  gameContainer?.setAttribute("inert", "");
+
+  startButton?.focus();
+
+  updateFullscreenButtonState();
+}
+
+/**
  * Fits the canvas to the available viewport while keeping the 3:2 ratio.
  * Applies HiDPI scaling so the rendering stays sharp.
  * @returns {void}
@@ -174,7 +221,15 @@ window.addEventListener("keydown", (e) => {
     if (e.code === "Space" || e.code === "Enter") {
       e.preventDefault();
       restartGame();
+    } else if (e.code === "Escape") {
+      e.preventDefault();
+      exitToHome();
     }
+    return;
+  }
+  if (hasGameStarted && e.code === "Escape") {
+    e.preventDefault();
+    exitToHome();
     return;
   }
   if (!hasGameStarted && (e.code === "Space" || e.code === "Enter")) {

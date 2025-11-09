@@ -135,6 +135,9 @@ ul {
 
 .game-controls {
   display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .game-controls__button {

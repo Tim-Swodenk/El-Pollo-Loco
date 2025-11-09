@@ -225,6 +225,18 @@ class World {
   }
 
   /**
+   * Stops all running timers and disables control without triggering game over.
+   * @returns {void}
+   */
+  destroy() {
+    this.stopGameLoop();
+    this.stopChickenSpawner();
+    this.stopCloudSpawner();
+    this.disablePlayerControl();
+    this.gameOverTriggered = true;
+  }
+
+  /**
    * Resets keyboard state to stop all movement.
    * @returns {void}
    */
