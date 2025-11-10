@@ -3,6 +3,7 @@ let world;
 let keyboard = new Keyboard();
 let hasGameStarted = false;
 let isGameOver = false;
+let touchControlButtons = [];
 
 // Logical base size of the game world
 const BASE_W = 720;
@@ -14,6 +15,7 @@ function initGameUI() {
   let buttons = getButtons();
   bindPrimaryButtons(buttons);
   registerLayoutObservers();
+  registerTouchControls();
   updateFullscreenButtonState();
   fitCanvasToScreen();
 }
@@ -49,6 +51,57 @@ function registerLayoutObservers() {
     document.addEventListener(event, onLayoutChange)
   );
   window.addEventListener("resize", onLayoutChange);
+  window.addEventListener("blur", resetTouchControls);
+}
+
+function registerTouchControls() {
+  let container = document.querySelector(".touch-controls");
+  if (!container) return;
+  touchControlButtons = Array.from(
+    container.querySelectorAll("[data-key]")
+  );
+  touchControlButtons.forEach((button) => {
+    let key = button.dataset.key;
+    if (!key) return;
+    let handlePress = (event) => {
+      event.preventDefault();
+      button.classList.add("is-active");
+      keyboard[key] = true;
+      if (typeof button.setPointerCapture === "function") {
+        try {
+          button.setPointerCapture(event.pointerId);
+        } catch (err) {
+          /* Pointer capture might fail on some browsers */
+        }
+      }
+    };
+    let handleRelease = (event) => {
+      event.preventDefault();
+      button.classList.remove("is-active");
+      keyboard[key] = false;
+      if (typeof button.releasePointerCapture === "function") {
+        try {
+          button.releasePointerCapture(event.pointerId);
+        } catch (err) {
+          /* Ignore release errors */
+        }
+      }
+    };
+    button.addEventListener("pointerdown", handlePress);
+    button.addEventListener("pointerup", handleRelease);
+    button.addEventListener("pointercancel", handleRelease);
+    button.addEventListener("pointerleave", handleRelease);
+    button.addEventListener("pointerout", handleRelease);
+  });
+}
+
+function resetTouchControls() {
+  touchControlButtons.forEach((button) => {
+    let key = button.dataset.key;
+    if (!key) return;
+    button.classList.remove("is-active");
+    keyboard[key] = false;
+  });
 }
 
 /**
@@ -115,6 +168,7 @@ function showGameContainer(gameContainer) {
  */
 function handleGameOver(reason = "loss") {
   isGameOver = true;
+  resetTouchControls();
   let elements = getGameOverElements();
   if (!elements.screen) return;
   updateGameOverContent(elements, reason);
@@ -176,6 +230,7 @@ function exitToHome() {
   ui.exitButton?.blur();
   exitFullscreenIfNeeded();
   resetWorldState();
+  resetTouchControls();
   resetUiState(ui);
   updateFullscreenButtonState();
 }

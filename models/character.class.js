@@ -69,6 +69,7 @@ class Character extends MovableObject {
     "assets/img/2_character_pepe/3_jump/J-38.png",
     "assets/img/2_character_pepe/3_jump/J-39.png",
   ];
+
   IMAGES_HURT = [
     "assets/img/2_character_pepe/4_hurt/H-41.png",
     "assets/img/2_character_pepe/4_hurt/H-42.png",
@@ -118,26 +119,20 @@ class Character extends MovableObject {
    * @returns {void}
    */
   playLoop(images, frameDuration = 60) {
-    const now = Date.now();
-    this.ensureAnimationSequence(images);
-    this.advanceAnimationFrame(images, frameDuration, now);
-  }
+    let now = Date.now();
 
-  ensureAnimationSequence(images) {
-    if (this.currentAnimation === images) return;
-    this.currentAnimation = images;
-    this.currentImage = 0;
-    this.lastFrameChangeAt = 0;
-  }
+    if (this.currentAnimation !== images) {
+      this.currentAnimation = images;
+      this.currentImage = 0;
+      this.lastFrameChangeAt = 0;
+    }
 
-  advanceAnimationFrame(images, frameDuration, now) {
     if (now - this.lastFrameChangeAt >= frameDuration) {
       this.playAnimation(images);
       this.lastFrameChangeAt = now;
-      return;
+    } else if (this.img == null && images.length > 0) {
+      this.img = this.imageCache[images[0]];
     }
-    if (this.img || images.length === 0) return;
-    this.img = this.imageCache[images[0]];
   }
 
   /**
@@ -145,88 +140,57 @@ class Character extends MovableObject {
    * @returns {void}
    */
   animate() {
-    this.startMovementLoop();
-    this.startAnimationLoop();
-  }
-
-  startMovementLoop() {
     setInterval(() => {
-      this.handleHorizontalMovement();
-      this.handleJumpInput();
-      this.handleActivityButtons();
-      this.updateCameraPosition();
+      if (this.world.keyboard.RIGHT && this.x < this.world.level.level_end_x) {
+        this.moveRight();
+        this.otherDirection = false;
+        this.setActive();
+      }
+
+      if (this.world.keyboard.LEFT && this.x > 0) {
+        this.moveLeft();
+        this.otherDirection = true;
+        this.setActive();
+      }
+
+      if (this.world.keyboard.SPACE && !this.isAboveGround()) {
+        this.jump();
+        this.setActive();
+      }
+
+      if (this.world.keyboard.SPACE || this.world.keyboard.D) {
+        this.setActive();
+      }
+
+      this.world.camera_x = -this.x + 100;
     }, 1000 / 60);
-  }
 
-  handleHorizontalMovement() {
-    if (this.world.keyboard.RIGHT && this.x < this.world.level.level_end_x) {
-      this.moveRight();
-      this.otherDirection = false;
-      this.setActive();
-    }
-    if (this.world.keyboard.LEFT && this.x > 0) {
-      this.moveLeft();
-      this.otherDirection = true;
-      this.setActive();
-    }
-  }
-
-  handleJumpInput() {
-    if (!this.world.keyboard.SPACE || this.isAboveGround()) return;
-    this.jump();
-    this.setActive();
-  }
-
-  handleActivityButtons() {
-    if (this.world.keyboard.SPACE || this.world.keyboard.D) {
-      this.setActive();
-    }
-  }
-
-  updateCameraPosition() {
-    this.world.camera_x = -this.x + 100;
-  }
-
-  startAnimationLoop() {
-    setInterval(() => this.updateAnimationState(), 60);
-  }
-
-  updateAnimationState() {
-    if (this.isDead()) return this.playLoop(this.IMAGES_DEAD);
-    if (this.isHurt()) return this.playHurtAnimation();
-    if (this.isAboveGround()) return this.playAirAnimation();
-    this.playGroundAnimation();
-  }
-
-  playHurtAnimation() {
-    this.setActive();
-    this.playLoop(this.IMAGES_HURT);
-  }
-
-  playAirAnimation() {
-    this.setActive();
-    this.jumpAnimation();
-  }
-
-  playGroundAnimation() {
-    if (this.world.keyboard.RIGHT || this.world.keyboard.LEFT) {
-      this.setActive();
-      this.playLoop(this.IMAGES_WALKING);
-      return;
-    }
-    this.playIdleAnimation();
-  }
-
-  playIdleAnimation() {
-    const idleTime = Date.now() - this.lastActiveAt;
-    if (idleTime >= Character.SLEEP_DELAY_MS) {
-      this.playLoop(
-        this.IMAGES_LONG_IDLE,
-        Character.LONG_IDLE_FRAME_DURATION_MS
-      );
-      return;
-    }
-    this.playLoop(this.IMAGES_IDLE, Character.IDLE_FRAME_DURATION_MS);
+    setInterval(() => {
+      if (this.isDead()) {
+        this.playLoop(this.IMAGES_DEAD);
+      } else if (this.isHurt()) {
+        this.setActive();
+        this.playLoop(this.IMAGES_HURT);
+      } else if (this.isAboveGround()) {
+        this.setActive();
+        this.jumpAnimation();
+      } else {
+        if (this.world.keyboard.RIGHT || this.world.keyboard.LEFT) {
+          this.setActive();
+          this.playLoop(this.IMAGES_WALKING);
+        } else {
+          let idleTime = Date.now() - this.lastActiveAt;
+          if (idleTime >= Character.SLEEP_DELAY_MS) {
+            this.playLoop(
+              this.IMAGES_LONG_IDLE,
+              Character.LONG_IDLE_FRAME_DURATION_MS
+            );
+          } else {
+            this.playLoop(this.IMAGES_IDLE, Character.IDLE_FRAME_DURATION_MS);
+          }
+        }
+      }
+    }, 60);
   }
 
   /**
@@ -234,38 +198,35 @@ class Character extends MovableObject {
    * @returns {void}
    */
   jumpAnimation() {
-    this.ensureJumpSequenceActive();
-    const sequence = this.IMAGES_JUMPING;
-    const progress = this.calculateJumpProgress();
-    const frameIndex = this.determineJumpFrame(progress, sequence.length);
-    this.img = this.imageCache[sequence[frameIndex]];
-  }
-
-  ensureJumpSequenceActive() {
-    if (this.currentAnimation === this.IMAGES_JUMPING) return;
-    this.currentAnimation = this.IMAGES_JUMPING;
-    this.currentImage = 0;
-  }
-
-  calculateJumpProgress() {
-    const ground = Character.GROUND_LEVEL;
-    const peak = -47.5;
-    if (this.y <= ground && this.y >= peak) {
-      return (ground - this.y) / (ground - peak);
+    if (this.currentAnimation !== this.IMAGES_JUMPING) {
+      this.currentAnimation = this.IMAGES_JUMPING;
+      this.currentImage = 0;
     }
-    if (this.y < peak) return 1;
-    const descent = Character.GROUND_LEVEL;
-    const progress = (this.y - peak) / (descent - peak);
-    return 1 + progress;
-  }
+    let groundStart = Character.GROUND_LEVEL;
+    let jumpPeak = -47.5;
+    let descentStart = Character.GROUND_LEVEL;
+    let sequence = this.IMAGES_JUMPING;
+    let progress;
 
-  determineJumpFrame(progress, length) {
-    const base =
-      progress <= 1
-        ? Math.round(progress * 3)
-        : 3 + Math.round((progress - 1) * 5);
-    const clamped = Math.max(0, Math.min(length - 1, base));
-    return clamped;
+    if (this.y <= groundStart && this.y >= jumpPeak) {
+      progress = (groundStart - this.y) / (groundStart - jumpPeak);
+    } else if (this.y < groundStart && this.y < jumpPeak) {
+      progress = 1;
+    } else {
+      progress = (this.y - jumpPeak) / (descentStart - jumpPeak);
+      progress = 1 + progress;
+    }
+
+    let frameIndex;
+
+    if (progress <= 1) {
+      frameIndex = Math.round(progress * 3);
+    } else {
+      frameIndex = 3 + Math.round((progress - 1) * 5);
+    }
+    frameIndex = Math.max(0, Math.min(sequence.length - 1, frameIndex));
+
+    this.img = this.imageCache[sequence[frameIndex]];
   }
 
   /**
