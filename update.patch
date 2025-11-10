@@ -1,0 +1,499 @@
+diff --git a/models/world.class.js b/models/world.class.js
+index a57b71efbd1e20a5dc07d00027c50c8e30bf73a0..44c45f89912e5210055bc5ba70fd884cb40df91f 100644
+--- a/models/world.class.js
++++ b/models/world.class.js
+@@ -90,121 +90,142 @@ class World {
+     const enemy = Math.random() < 0.5 ? new Chicken() : new SmallChicken();
+     enemy.x = spawnX;
+     this.registerEnemy(enemy);
+ 
+     this.level.enemies.push(enemy);
+   }
+ 
+   /**
+    * Assigns the world to the enemy and starts its behaviour if supported.
+    * @param {MovableObject} enemy - Enemy to register.
+    * @returns {void}
+    */
+   registerEnemy(enemy) {
+     enemy.world = this;
+     if (typeof enemy.startBehavior === "function") {
+       enemy.startBehavior();
+     }
+   }
+ 
+   /**
+    * Assigns the world reference to contained objects.
+    * @returns {void}
+    */
+   setWorld() {
+     this.character.world = this;
++    this.assignWorldToEnemies();
++    this.assignWorldToCollectables();
++    this.totalBottles = this.level.collectableObjects.length;
++  }
+ 
++  assignWorldToEnemies() {
+     for (const enemy of this.level.enemies) {
+       this.registerEnemy(enemy);
+     }
+-    for (const obj of this.level.collectableObjects) {
+-      obj.world = this;
+-    }
+-    for (const obj of this.level.coinObjects) {
++  }
++
++  assignWorldToCollectables() {
++    this.assignWorldToObjects(this.level.collectableObjects);
++    this.assignWorldToObjects(this.level.coinObjects);
++  }
++
++  assignWorldToObjects(objects) {
++    for (const obj of objects) {
+       obj.world = this;
+     }
+-
+-    this.totalBottles = this.level.collectableObjects.length;
+   }
+ 
+   /**
+    * Periodically removes off-screen clouds and spawns new ones to the right.
+    * @returns {void}
+    */
+   startCloudSpawner() {
+     this.nextCloudSpawnX = 0;
++    this.fillInitialClouds();
++    this.beginCloudSpawnerInterval();
++  }
+ 
+-    // initial fill
++  fillInitialClouds() {
+     for (let i = 0; i < 6; i++) {
+-      const cloud = new Cloud(this.nextCloudSpawnX);
+-      this.level.clouds.push(cloud);
+-      this.nextCloudSpawnX += cloud.width;
++      this.spawnCloud();
+     }
++  }
+ 
++  beginCloudSpawnerInterval() {
+     this.stopCloudSpawner();
+     this.cloudSpawnerId = setInterval(() => {
+-      // keep only visible clouds
+-      this.level.clouds = this.level.clouds.filter(
+-        (cloud) => cloud.x + cloud.width >= 0
++      this.level.clouds = this.level.clouds.filter((cloud) =>
++        this.isCloudVisible(cloud)
+       );
+-
+-      // add one more to the right
+-      const cloud = new Cloud(this.nextCloudSpawnX);
+-      this.level.clouds.push(cloud);
+-      this.nextCloudSpawnX += cloud.width;
++      this.spawnCloud();
+     }, 60000);
+   }
+ 
++  isCloudVisible(cloud) {
++    return cloud.x + cloud.width >= 0;
++  }
++
++  spawnCloud() {
++    const cloud = new Cloud(this.nextCloudSpawnX);
++    this.level.clouds.push(cloud);
++    this.nextCloudSpawnX += cloud.width;
++  }
++
+   /**
+    * Stops spawning clouds.
+    * @returns {void}
+    */
+   stopCloudSpawner() {
+     if (!this.cloudSpawnerId) return;
+     clearInterval(this.cloudSpawnerId);
+     this.cloudSpawnerId = null;
+   }
+ 
+   /**
+    * Starts the main game loop checking collisions and throws.
+    * @returns {void}
+    */
+   run() {
+     this.stopGameLoop();
+-    this.gameLoopIntervalId = setInterval(() => {
+-      this.checkCollisionsStomping();
+-      this.checkCollisionsCharacter();
+-      this.checkCollisionsBottle();
+-      this.checkCollisionsCoins();
+-      this.checkThrowObjects();
+-      this.checkBottleHitsRegularEnemies();
+-      this.checkBottleHitsEndboss();
+-
+-      if (!this.gameOverTriggered && this.character.isDead()) {
+-        this.triggerGameOver("loss");
+-      }
+-    }, 100);
++    this.gameLoopIntervalId = setInterval(() => this.gameLoopStep(), 100);
++  }
++
++  gameLoopStep() {
++    this.checkCollisionsStomping();
++    this.checkCollisionsCharacter();
++    this.checkCollisionsBottle();
++    this.checkCollisionsCoins();
++    this.checkThrowObjects();
++    this.checkBottleHitsRegularEnemies();
++    this.checkBottleHitsEndboss();
++    this.finishGameIfDead();
++  }
++
++  finishGameIfDead() {
++    if (!this.gameOverTriggered && this.character.isDead()) {
++      this.triggerGameOver("loss");
++    }
+   }
+ 
+   /**
+    * Stops the main game loop interval.
+    * @returns {void}
+    */
+   stopGameLoop() {
+     if (!this.gameLoopIntervalId) return;
+     clearInterval(this.gameLoopIntervalId);
+     this.gameLoopIntervalId = null;
+   }
+ 
+   /**
+    * Registers a callback that is executed when the game is over.
+    * @param {() => void} callback - Callback to run.
+    * @returns {void}
+    */
+   setOnGameOver(callback) {
+     this.onGameOver = callback;
+   }
+ 
+   /**
+    * Stops movement, timers and triggers the game over callback.
+    * @param {"win"|"loss"} [reason="loss"] - Outcome that finished the game.
+    * @returns {void}
+@@ -233,63 +254,73 @@ class World {
+     this.stopChickenSpawner();
+     this.stopCloudSpawner();
+     this.disablePlayerControl();
+     this.gameOverTriggered = true;
+   }
+ 
+   /**
+    * Resets keyboard state to stop all movement.
+    * @returns {void}
+    */
+   disablePlayerControl() {
+     if (!this.keyboard) return;
+ 
+     for (const key of Object.keys(this.keyboard)) {
+       this.keyboard[key] = false;
+     }
+     this.character.speed = 0;
+     this.character.speedY = 0;
+   }
+ 
+   /**
+    * Handles throwing bottles when the D key is pressed.
+    * @returns {void}
+    */
+   checkThrowObjects() {
+-    if (!this.keyboard.D || this.collectedBottles <= 0) return;
++    if (!this.canThrowBottle()) return;
++    const bottle = this.createThrowableBottle();
++    this.throwableObjects.push(bottle);
++    this.handleBottleThrown();
++  }
+ 
++  canThrowBottle() {
++    if (!this.keyboard.D || this.collectedBottles <= 0) return false;
+     const now = Date.now();
+-    if (now - this.lastThrowTime < this.throwCooldownMs) return;
++    if (now - this.lastThrowTime < this.throwCooldownMs) return false;
++    this.lastThrowTime = now;
++    return true;
++  }
+ 
+-    let bottle = new ThrowableObject(this.character.x, this.character.y + 200);
++  createThrowableBottle() {
++    const bottle = new ThrowableObject(this.character.x, this.character.y + 200);
+     bottle.world = this;
+-    this.throwableObjects.push(bottle);
+-
+-    this.lastThrowTime = now;
++    return bottle;
++  }
+ 
++  handleBottleThrown() {
+     this.collectedBottles--;
+-    let perc = (this.collectedBottles / this.maxBottles) * 100;
++    const perc = (this.collectedBottles / this.maxBottles) * 100;
+     this.statusBarBottles.setPercentage(perc);
+   }
+ 
+   /**
+    * Checks collisions between the character and other objects.
+    * @returns {void}
+    */
+   checkCollisionsCharacter() {
+     for (const enemy of this.level.enemies) {
+       if (
+         enemy.dead ||
+         !this.character.isColliding(enemy) ||
+         MovableObject.isTopBottomCollision(this.character, enemy) ||
+         this.character.isHurt()
+       ) {
+         continue;
+       }
+       this.character.hit();
+       this.statusBarHealth.setPercentage(this.character.energy);
+     }
+   }
+ 
+   /**
+    * Detects and resolves collisions when the character stomps chickens.
+    * @returns {void}
+@@ -309,166 +340,192 @@ class World {
+   /**
+    * Handles collisions between the character and collectible bottles.
+    * @returns {void}
+    */
+   checkCollisionsBottle() {
+     for (const obj of this.level.collectableObjects) {
+       if (
+         this.character.isColliding(obj) &&
+         this.collectedBottles < this.maxBottles
+       ) {
+         obj.collect();
+         this.collectedBottles++;
+         const perc = (this.collectedBottles / this.maxBottles) * 100;
+         this.statusBarBottles.setPercentage(perc);
+       }
+     }
+   }
+ 
+   /**
+    * Handles collisions between the character and collectible coins.
+    * @returns {void}
+    */
+   checkCollisionsCoins() {
+     for (const obj of this.level.coinObjects) {
+       if (!this.character.isColliding(obj)) continue;
++      this.collectCoin(obj);
++    }
++  }
+ 
+-      obj.collect();
+-      this.collectedCoins++;
+-      const perc = (this.collectedCoins / this.maxCoins) * 100;
+-      this.statusBarCoins.setPercentage(perc);
++  collectCoin(obj) {
++    obj.collect();
++    this.collectedCoins++;
++    this.updateCoinStatusBar();
++    if (this.collectedCoins !== this.maxCoins) return;
++    this.handleFullCoinStack();
++  }
+ 
+-      if (this.collectedCoins === this.maxCoins) {
+-        this.character.heal(20);
+-        this.statusBarHealth.setPercentage(this.character.energy);
+-        this.collectedCoins = 0;
+-        this.statusBarCoins.setPercentage(0);
+-      }
+-    }
++  updateCoinStatusBar() {
++    const perc = (this.collectedCoins / this.maxCoins) * 100;
++    this.statusBarCoins.setPercentage(perc);
++  }
++
++  handleFullCoinStack() {
++    this.character.heal(20);
++    this.statusBarHealth.setPercentage(this.character.energy);
++    this.collectedCoins = 0;
++    this.statusBarCoins.setPercentage(0);
+   }
+ 
+   /**
+    * Checks collisions between thrown bottles and the endboss.
+    * @returns {void}
+    */
+   checkBottleHitsEndboss() {
+     const endboss = this.level.enemies.find((e) => e instanceof Endboss);
+     if (!endboss || endboss.dead) return;
+-
+     for (const bottle of this.throwableObjects) {
+-      if (bottle.hasSplashed) continue;
+-      if (!bottle.isColliding(endboss)) continue;
+-
+-      this.handleBottleImpact(bottle);
++      if (this.shouldSkipBottle(bottle, endboss)) continue;
++      this.processEndbossHit(bottle, endboss);
++    }
++  }
+ 
+-      endboss.hit();
+-      this.statusBarEndboss.setPercentage(endboss.energy);
++  shouldSkipBottle(bottle, target) {
++    return bottle.hasSplashed || !bottle.isColliding(target);
++  }
+ 
+-      if (!this.gameOverTriggered && endboss.energy <= 0) {
+-        this.triggerGameOver("win");
+-      }
++  processEndbossHit(bottle, endboss) {
++    this.handleBottleImpact(bottle);
++    endboss.hit();
++    this.statusBarEndboss.setPercentage(endboss.energy);
++    if (!this.gameOverTriggered && endboss.energy <= 0) {
++      this.triggerGameOver("win");
+     }
+   }
+ 
+   /**
+    * Checks collisions between thrown bottles and regular enemies (chickens).
+    * @returns {void}
+    */
+   checkBottleHitsRegularEnemies() {
+     for (const bottle of this.throwableObjects) {
+       if (bottle.hasSplashed) continue;
++      this.handleBottleVsChicken(bottle);
++    }
++  }
+ 
+-      for (const enemy of this.level.enemies) {
+-        if (
+-          enemy.dead ||
+-          !(enemy instanceof Chicken || enemy instanceof SmallChicken)
+-        ) {
+-          continue;
+-        }
+-        if (!bottle.isColliding(enemy)) continue;
+-
+-        this.handleBottleImpact(bottle);
+-        enemy.die();
+-        break;
+-      }
++  handleBottleVsChicken(bottle) {
++    for (const enemy of this.level.enemies) {
++      if (!this.isBottleHittingChicken(bottle, enemy)) continue;
++      this.handleBottleImpact(bottle);
++      enemy.die();
++      break;
+     }
+   }
+ 
++  isBottleHittingChicken(bottle, enemy) {
++    if (enemy.dead) return false;
++    const isChicken = enemy instanceof Chicken || enemy instanceof SmallChicken;
++    return isChicken && bottle.isColliding(enemy);
++  }
++
+   /**
+    * Stops bottle movement and starts the splash animation.
+    * @param {ThrowableObject} bottle - The bottle that hit something.
+    * @returns {void}
+    */
+   handleBottleImpact(bottle) {
+     if (bottle.hasSplashed) return;
+ 
+     bottle.hasSplashed = true;
+     clearInterval(bottle.animationInterval);
+     clearInterval(bottle.throwInterval);
+     clearInterval(bottle.gravityInterval);
+     bottle.playSplashAnimationOnce();
+   }
+ 
+   /**
+    * Clears the canvas and draws all game objects.
+    * @returns {void}
+    */
+   draw = () => {
++    this.clearCanvas();
++    this.drawBackground();
++    this.drawHud();
++    this.drawForeground();
++    this.resetCamera();
++    requestAnimationFrame(this.draw);
++  };
++
++  clearCanvas() {
+     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
++  }
+ 
+-    //background & clouds
++  drawBackground() {
+     this.ctx.translate(this.camera_x, 0);
+     this.addObjectsToMap(this.level.backgroundObjects);
+     this.addObjectsToMap(this.level.clouds);
++  }
+ 
+-    //HUD
++  drawHud() {
+     this.ctx.translate(-this.camera_x, 0);
+     this.addToMap(this.statusBarHealth);
+     this.addToMap(this.statusBarBottles);
+     this.addToMap(this.statusBarCoins);
+-
+-    if (
+-      this.endboss &&
+-      this.endboss.x + this.camera_x >= 0 &&
+-      this.endboss.x + this.camera_x <= this.canvas.width
+-    ) {
++    if (this.shouldShowEndbossBar()) {
+       this.addToMap(this.statusBarEndboss);
+     }
++  }
++
++  shouldShowEndbossBar() {
++    if (!this.endboss) return false;
++    const x = this.endboss.x + this.camera_x;
++    return x >= 0 && x <= this.canvas.width;
++  }
+ 
+-    //foreground actors
++  drawForeground() {
+     this.ctx.translate(this.camera_x, 0);
+     this.addToMap(this.character);
+     this.addObjectsToMap(this.level.enemies);
+     this.addObjectsToMap(this.throwableObjects);
+     this.addObjectsToMap(this.level.collectableObjects);
+     this.addObjectsToMap(this.level.coinObjects);
++  }
+ 
+-    //reset transform for next frame
++  resetCamera() {
+     this.ctx.translate(-this.camera_x, 0);
+-
+-    requestAnimationFrame(this.draw);
+-  };
++  }
+ 
+   /**
+    * Adds multiple objects to the canvas.
+    * @param {DrawableObject[]} objects - Objects to add.
+    * @returns {void}
+    */
+   addObjectsToMap(objects) {
+     for (const o of objects) {
+       this.addToMap(o);
+     }
+   }
+ 
+   /**
+    * Draws a single movable object and handles direction flipping.
+    * @param {MovableObject} mo - Object to draw.
+    * @returns {void}
+    */
+   addToMap(mo) {
+     if (mo.otherDirection) this.flipImage(mo);
+ 
+     mo.draw(this.ctx);
+     //mo.drawFrame(this.ctx);
+ 
+     if (mo.otherDirection) this.flipImageBack(mo);
+   }

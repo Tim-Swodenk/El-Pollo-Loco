@@ -38,7 +38,6 @@ ul {
 
 .game-wrapper {
   width: 100%;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -215,10 +214,8 @@ ul {
 }
 
 .site-footer {
-  width: 100%;
-  padding: 24px 16px 40px;
-  display: flex;
-  justify-content: center;
+  position: absolute;
+  bottom: 16px;
 }
 
 .site-footer__link {
