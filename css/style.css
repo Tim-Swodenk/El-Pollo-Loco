@@ -17,7 +17,6 @@ body {
     #f67528 35%,
     #2c1b47 100%
   );
-  overflow-x: hidden;
 }
 
 body:not(.legal-page) {
@@ -47,7 +46,6 @@ ul {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 32px;
 }
 
 .legal-page__container {
@@ -463,6 +461,21 @@ canvas {
   border: 4px solid rgba(255, 255, 255, 0.08);
 }
 
+@media (max-width: 1024px) {
+  body {
+    padding: 16px;
+  }
+
+  .touch-controls {
+    display: flex;
+  }
+
+  .start-screen {
+    width: 100%;
+    padding: clamp(16px, 0vw, 16px);
+  }
+}
+
 @media (max-width: 700px) {
   body {
     padding: 16px;
@@ -490,12 +503,6 @@ canvas {
 
   .control-hints__group {
     flex: 1 1 100%;
-  }
-}
-
-@media (max-width: 1024px) {
-  .touch-controls {
-    display: flex;
   }
 }
 
