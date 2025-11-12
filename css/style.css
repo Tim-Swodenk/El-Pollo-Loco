@@ -391,7 +391,7 @@ ul {
   left: 0;
   right: 0;
   bottom: clamp(16px, 5vw, 16px);
-  width: min(100%, 720px);
+  width: min(100%, 880px);
   margin: 0 auto;
   display: none;
   justify-content: space-between;
@@ -472,7 +472,7 @@ ul {
 
 canvas {
   background-color: black;
-  width: min(100%, 720px);
+  width: min(100%, 880px);
   aspect-ratio: 3/2;
   background-color: #000;
   border-radius: 24px;
@@ -483,6 +483,10 @@ canvas {
 @media (max-width: 1024px) {
   body {
     padding: 16px;
+  }
+
+  body.is-playing {
+    padding: clamp(6px, 3vw, 12px);
   }
 
   .touch-controls {

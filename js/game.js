@@ -8,6 +8,11 @@ let touchControlButtons = [];
 // Logical base size of the game world
 const BASE_W = 720;
 const BASE_H = 480;
+const WINDOWED_MAX_WIDTH = 880;
+const WINDOWED_MIN_WIDTH = 280;
+const WINDOWED_MARGIN_NARROW = 12;
+const WINDOWED_MARGIN_WIDE = 24;
+const TOUCH_CONTROLS_SPACING = 24;
 
 document.addEventListener("DOMContentLoaded", initGameUI);
 
@@ -38,6 +43,10 @@ function bindPrimaryButtons(buttons) {
 
 function bindButton(button, handler) {
   button?.addEventListener("click", handler);
+}
+
+function setBodyPlayingState(isPlaying) {
+  document.body.classList.toggle("is-playing", isPlaying);
 }
 
 function registerLayoutObservers() {
@@ -139,6 +148,7 @@ function startGame() {
   let ui = getGameScreens();
   hideStartScreen(ui.startScreen, ui.startButton);
   showGameContainer(ui.gameContainer);
+  setBodyPlayingState(true);
   init();
   hasGameStarted = true;
 }
@@ -231,8 +241,10 @@ function exitToHome() {
   exitFullscreenIfNeeded();
   resetWorldState();
   resetTouchControls();
+  setBodyPlayingState(false);
   resetUiState(ui);
   updateFullscreenButtonState();
+  fitCanvasToScreen();
 }
 
 function getExitElements() {
@@ -348,15 +360,57 @@ function applyCanvasScale(el, scale, dpr) {
 }
 
 function fitCanvasWindowed(el, dpr) {
-  clearCanvasStyle(el);
-  let render = getRenderSize({ targetW: BASE_W, targetH: BASE_H }, dpr);
+  let size = getWindowedCanvasSize();
+  setCanvasStyle(el, size.targetW, size.targetH);
+  let render = getRenderSize(size, dpr);
   updateCanvasResolution(el, render.width, render.height);
-  applyCanvasScale(el, 1, dpr);
+  applyCanvasScale(el, size.targetW / BASE_W, dpr);
 }
 
-function clearCanvasStyle(el) {
-  el.style.width = "";
-  el.style.height = "";
+function getWindowedCanvasSize() {
+  const ratio = BASE_W / BASE_H;
+  const margin = getViewportMargin();
+  const availableWidth = Math.max(window.innerWidth - margin * 2, 0);
+  const availableHeight = Math.max(
+    window.innerHeight - margin * 2 - getTouchControlsOffset(),
+    0
+  );
+
+  if (availableWidth <= 0 || availableHeight <= 0) {
+    return { targetW: BASE_W, targetH: BASE_H };
+  }
+
+  const widthLimit = Math.min(availableWidth, WINDOWED_MAX_WIDTH);
+  const heightLimitedWidth = availableHeight * ratio;
+  const minWidth = Math.min(WINDOWED_MIN_WIDTH, heightLimitedWidth, widthLimit);
+  const targetW = Math.max(Math.min(widthLimit, heightLimitedWidth), minWidth);
+  const targetH = targetW / ratio;
+
+  if (!Number.isFinite(targetW) || !Number.isFinite(targetH) || targetW <= 0 || targetH <= 0) {
+    return { targetW: BASE_W, targetH: BASE_H };
+  }
+
+  return { targetW, targetH };
+}
+
+function getViewportMargin() {
+  return window.innerWidth <= 1024 ? WINDOWED_MARGIN_NARROW : WINDOWED_MARGIN_WIDE;
+}
+
+function getTouchControlsOffset() {
+  const controls = document.querySelector(".touch-controls");
+  if (!isElementVisible(controls)) return 0;
+  return controls.getBoundingClientRect().height + TOUCH_CONTROLS_SPACING;
+}
+
+function isElementVisible(element) {
+  if (!element) return false;
+  const styles = window.getComputedStyle(element);
+  if (styles.display === "none" || styles.visibility === "hidden" || styles.opacity === "0") {
+    return false;
+  }
+  const rect = element.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0;
 }
 
 /**

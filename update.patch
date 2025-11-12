@@ -1,499 +1,296 @@
-diff --git a/models/world.class.js b/models/world.class.js
-index a57b71efbd1e20a5dc07d00027c50c8e30bf73a0..44c45f89912e5210055bc5ba70fd884cb40df91f 100644
---- a/models/world.class.js
-+++ b/models/world.class.js
-@@ -90,121 +90,142 @@ class World {
-     const enemy = Math.random() < 0.5 ? new Chicken() : new SmallChicken();
-     enemy.x = spawnX;
-     this.registerEnemy(enemy);
+diff --git a/js/game.js b/js/game.js
+index e71b33568ca547957ba474bf14bfc902ac2b0043..af817c9bdd880ccf990382666c94e067cd88a4d2 100644
+--- a/js/game.js
++++ b/js/game.js
+@@ -1,67 +1,76 @@
+ let canvas;
+ let world;
+ let keyboard = new Keyboard();
+ let hasGameStarted = false;
+ let isGameOver = false;
+ let touchControlButtons = [];
  
-     this.level.enemies.push(enemy);
-   }
+ // Logical base size of the game world
+ const BASE_W = 720;
+ const BASE_H = 480;
++const WINDOWED_MAX_WIDTH = 880;
++const WINDOWED_MIN_WIDTH = 280;
++const WINDOWED_MARGIN_NARROW = 12;
++const WINDOWED_MARGIN_WIDE = 24;
++const TOUCH_CONTROLS_SPACING = 24;
  
-   /**
-    * Assigns the world to the enemy and starts its behaviour if supported.
-    * @param {MovableObject} enemy - Enemy to register.
-    * @returns {void}
-    */
-   registerEnemy(enemy) {
-     enemy.world = this;
-     if (typeof enemy.startBehavior === "function") {
-       enemy.startBehavior();
-     }
-   }
+ document.addEventListener("DOMContentLoaded", initGameUI);
  
-   /**
-    * Assigns the world reference to contained objects.
-    * @returns {void}
-    */
-   setWorld() {
-     this.character.world = this;
-+    this.assignWorldToEnemies();
-+    this.assignWorldToCollectables();
-+    this.totalBottles = this.level.collectableObjects.length;
-+  }
+ function initGameUI() {
+   let buttons = getButtons();
+   bindPrimaryButtons(buttons);
+   registerLayoutObservers();
+   registerTouchControls();
+   updateFullscreenButtonState();
+   fitCanvasToScreen();
+ }
  
-+  assignWorldToEnemies() {
-     for (const enemy of this.level.enemies) {
-       this.registerEnemy(enemy);
-     }
--    for (const obj of this.level.collectableObjects) {
--      obj.world = this;
--    }
--    for (const obj of this.level.coinObjects) {
+ function getButtons() {
+   return {
+     start: document.getElementById("start-button"),
+     restart: document.getElementById("restart-button"),
+     fullscreen: document.getElementById("fullscreen-button"),
+     exit: document.getElementById("exit-button"),
+   };
+ }
+ 
+ function bindPrimaryButtons(buttons) {
+   bindButton(buttons.start, startGame);
+   bindButton(buttons.restart, restartGame);
+   bindButton(buttons.fullscreen, toggleFullscreen);
+   bindButton(buttons.exit, exitToHome);
+ }
+ 
+ function bindButton(button, handler) {
+   button?.addEventListener("click", handler);
+ }
+ 
++function setBodyPlayingState(isPlaying) {
++  document.body.classList.toggle("is-playing", isPlaying);
++}
++
+ function registerLayoutObservers() {
+   let fullscreenEvents = [
+     "fullscreenchange",
+     "webkitfullscreenchange",
+     "mozfullscreenchange",
+     "MSFullscreenChange",
+   ];
+   fullscreenEvents.forEach((event) =>
+     document.addEventListener(event, onLayoutChange)
+   );
+   window.addEventListener("resize", onLayoutChange);
+   window.addEventListener("blur", resetTouchControls);
+ }
+ 
+ function registerTouchControls() {
+   let container = document.querySelector(".touch-controls");
+   if (!container) return;
+   touchControlButtons = Array.from(
+     container.querySelectorAll("[data-key]")
+   );
+   touchControlButtons.forEach((button) => {
+     let key = button.dataset.key;
+     if (!key) return;
+     let handlePress = (event) => {
+       event.preventDefault();
+@@ -117,50 +126,51 @@ function onLayoutChange() {
+  * Initializes the game world and resizes the canvas.
+  * @returns {void}
+  */
+ function init() {
+   canvas = document.getElementById("canvas");
+   if (!canvas) return;
+ 
+   canvas.width = BASE_W;
+   canvas.height = BASE_H;
+ 
+   world = new World(canvas, keyboard);
+   world.setOnGameOver(handleGameOver);
+ 
+   fitCanvasToScreen();
+ }
+ 
+ /**
+  * Starts the game, hiding the start screen.
+  * @returns {void}
+  */
+ function startGame() {
+   if (hasGameStarted) return;
+   let ui = getGameScreens();
+   hideStartScreen(ui.startScreen, ui.startButton);
+   showGameContainer(ui.gameContainer);
++  setBodyPlayingState(true);
+   init();
+   hasGameStarted = true;
+ }
+ 
+ function getGameScreens() {
+   return {
+     startScreen: document.getElementById("start-screen"),
+     gameContainer: document.getElementById("game-container"),
+     startButton: document.getElementById("start-button"),
+   };
+ }
+ 
+ function hideStartScreen(startScreen, startButton) {
+   startButton?.blur();
+   startScreen?.classList.add("is-hidden");
+   startScreen?.setAttribute("inert", "");
+ }
+ 
+ function showGameContainer(gameContainer) {
+   gameContainer?.classList.remove("is-hidden");
+   gameContainer?.removeAttribute("inert");
+ }
+ 
+ /**
+  * Shows the game over dialog and focuses the restart button.
+@@ -209,52 +219,54 @@ function getGameOverContent(reason) {
+ 
+ function revealGameOverScreen(elements) {
+   elements.screen.classList.remove("is-hidden");
+   elements.screen.removeAttribute("inert");
+   elements.restartButton?.focus();
+ }
+ 
+ /**
+  * Reloads the page to restart the game.
+  * @returns {void}
+  */
+ function restartGame() {
+   window.location.reload();
+ }
+ 
+ /**
+  * Returns to the start screen and cleans up the current game instance.
+  * @returns {void}
+  */
+ function exitToHome() {
+   let ui = getExitElements();
+   ui.exitButton?.blur();
+   exitFullscreenIfNeeded();
+   resetWorldState();
+   resetTouchControls();
++  setBodyPlayingState(false);
+   resetUiState(ui);
+   updateFullscreenButtonState();
++  fitCanvasToScreen();
+ }
+ 
+ function getExitElements() {
+   return {
+     startScreen: document.getElementById("start-screen"),
+     gameContainer: document.getElementById("game-container"),
+     gameOverScreen: document.getElementById("game-over-screen"),
+     exitButton: document.getElementById("exit-button"),
+     startButton: document.getElementById("start-button"),
+   };
+ }
+ 
+ function exitFullscreenIfNeeded() {
+   if (isFullscreenActive()) exitFullscreen();
+ }
+ 
+ function resetWorldState() {
+   destroyWorld();
+   recreateLevel();
+   keyboard = new Keyboard();
+   hasGameStarted = false;
+   isGameOver = false;
+ }
+ 
+ function destroyWorld() {
+@@ -326,59 +338,101 @@ function getFullscreenCanvasSize() {
+ 
+ function setCanvasStyle(el, width, height) {
+   el.style.width = `${width}px`;
+   el.style.height = `${height}px`;
+ }
+ 
+ function getRenderSize(size, dpr) {
+   return {
+     width: Math.round(size.targetW * dpr),
+     height: Math.round(size.targetH * dpr),
+   };
+ }
+ 
+ function updateCanvasResolution(el, width, height) {
+   if (el.width === width && el.height === height) return;
+   el.width = width;
+   el.height = height;
+ }
+ 
+ function applyCanvasScale(el, scale, dpr) {
+   let ctx = el.getContext("2d");
+   ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+ }
+ 
+ function fitCanvasWindowed(el, dpr) {
+-  clearCanvasStyle(el);
+-  let render = getRenderSize({ targetW: BASE_W, targetH: BASE_H }, dpr);
++  let size = getWindowedCanvasSize();
++  setCanvasStyle(el, size.targetW, size.targetH);
++  let render = getRenderSize(size, dpr);
+   updateCanvasResolution(el, render.width, render.height);
+-  applyCanvasScale(el, 1, dpr);
++  applyCanvasScale(el, size.targetW / BASE_W, dpr);
++}
++
++function getWindowedCanvasSize() {
++  const ratio = BASE_W / BASE_H;
++  const margin = getViewportMargin();
++  const availableWidth = Math.max(window.innerWidth - margin * 2, 0);
++  const availableHeight = Math.max(
++    window.innerHeight - margin * 2 - getTouchControlsOffset(),
++    0
++  );
++
++  if (availableWidth <= 0 || availableHeight <= 0) {
++    return { targetW: BASE_W, targetH: BASE_H };
 +  }
 +
-+  assignWorldToCollectables() {
-+    this.assignWorldToObjects(this.level.collectableObjects);
-+    this.assignWorldToObjects(this.level.coinObjects);
++  const widthLimit = Math.min(availableWidth, WINDOWED_MAX_WIDTH);
++  const heightLimitedWidth = availableHeight * ratio;
++  const minWidth = Math.min(WINDOWED_MIN_WIDTH, heightLimitedWidth, widthLimit);
++  const targetW = Math.max(Math.min(widthLimit, heightLimitedWidth), minWidth);
++  const targetH = targetW / ratio;
++
++  if (!Number.isFinite(targetW) || !Number.isFinite(targetH) || targetW <= 0 || targetH <= 0) {
++    return { targetW: BASE_W, targetH: BASE_H };
 +  }
 +
-+  assignWorldToObjects(objects) {
-+    for (const obj of objects) {
-       obj.world = this;
-     }
--
--    this.totalBottles = this.level.collectableObjects.length;
-   }
++  return { targetW, targetH };
+ }
  
-   /**
-    * Periodically removes off-screen clouds and spawns new ones to the right.
-    * @returns {void}
-    */
-   startCloudSpawner() {
-     this.nextCloudSpawnX = 0;
-+    this.fillInitialClouds();
-+    this.beginCloudSpawnerInterval();
-+  }
- 
--    // initial fill
-+  fillInitialClouds() {
-     for (let i = 0; i < 6; i++) {
--      const cloud = new Cloud(this.nextCloudSpawnX);
--      this.level.clouds.push(cloud);
--      this.nextCloudSpawnX += cloud.width;
-+      this.spawnCloud();
-     }
-+  }
- 
-+  beginCloudSpawnerInterval() {
-     this.stopCloudSpawner();
-     this.cloudSpawnerId = setInterval(() => {
--      // keep only visible clouds
--      this.level.clouds = this.level.clouds.filter(
--        (cloud) => cloud.x + cloud.width >= 0
-+      this.level.clouds = this.level.clouds.filter((cloud) =>
-+        this.isCloudVisible(cloud)
-       );
--
--      // add one more to the right
--      const cloud = new Cloud(this.nextCloudSpawnX);
--      this.level.clouds.push(cloud);
--      this.nextCloudSpawnX += cloud.width;
-+      this.spawnCloud();
-     }, 60000);
-   }
- 
-+  isCloudVisible(cloud) {
-+    return cloud.x + cloud.width >= 0;
-+  }
+-function clearCanvasStyle(el) {
+-  el.style.width = "";
+-  el.style.height = "";
++function getViewportMargin() {
++  return window.innerWidth <= 1024 ? WINDOWED_MARGIN_NARROW : WINDOWED_MARGIN_WIDE;
++}
 +
-+  spawnCloud() {
-+    const cloud = new Cloud(this.nextCloudSpawnX);
-+    this.level.clouds.push(cloud);
-+    this.nextCloudSpawnX += cloud.width;
-+  }
++function getTouchControlsOffset() {
++  const controls = document.querySelector(".touch-controls");
++  if (!isElementVisible(controls)) return 0;
++  return controls.getBoundingClientRect().height + TOUCH_CONTROLS_SPACING;
++}
 +
-   /**
-    * Stops spawning clouds.
-    * @returns {void}
-    */
-   stopCloudSpawner() {
-     if (!this.cloudSpawnerId) return;
-     clearInterval(this.cloudSpawnerId);
-     this.cloudSpawnerId = null;
-   }
- 
-   /**
-    * Starts the main game loop checking collisions and throws.
-    * @returns {void}
-    */
-   run() {
-     this.stopGameLoop();
--    this.gameLoopIntervalId = setInterval(() => {
--      this.checkCollisionsStomping();
--      this.checkCollisionsCharacter();
--      this.checkCollisionsBottle();
--      this.checkCollisionsCoins();
--      this.checkThrowObjects();
--      this.checkBottleHitsRegularEnemies();
--      this.checkBottleHitsEndboss();
--
--      if (!this.gameOverTriggered && this.character.isDead()) {
--        this.triggerGameOver("loss");
--      }
--    }, 100);
-+    this.gameLoopIntervalId = setInterval(() => this.gameLoopStep(), 100);
++function isElementVisible(element) {
++  if (!element) return false;
++  const styles = window.getComputedStyle(element);
++  if (styles.display === "none" || styles.visibility === "hidden" || styles.opacity === "0") {
++    return false;
 +  }
-+
-+  gameLoopStep() {
-+    this.checkCollisionsStomping();
-+    this.checkCollisionsCharacter();
-+    this.checkCollisionsBottle();
-+    this.checkCollisionsCoins();
-+    this.checkThrowObjects();
-+    this.checkBottleHitsRegularEnemies();
-+    this.checkBottleHitsEndboss();
-+    this.finishGameIfDead();
-+  }
-+
-+  finishGameIfDead() {
-+    if (!this.gameOverTriggered && this.character.isDead()) {
-+      this.triggerGameOver("loss");
-+    }
-   }
++  const rect = element.getBoundingClientRect();
++  return rect.width > 0 && rect.height > 0;
+ }
  
-   /**
-    * Stops the main game loop interval.
-    * @returns {void}
-    */
-   stopGameLoop() {
-     if (!this.gameLoopIntervalId) return;
-     clearInterval(this.gameLoopIntervalId);
-     this.gameLoopIntervalId = null;
-   }
+ /**
+  * Handles keyboard keydown events.
+  * @param {KeyboardEvent} e - The keyboard event.
+  * @returns {void}
+  */
+ window.addEventListener("keydown", onKeyDown);
  
-   /**
-    * Registers a callback that is executed when the game is over.
-    * @param {() => void} callback - Callback to run.
-    * @returns {void}
-    */
-   setOnGameOver(callback) {
-     this.onGameOver = callback;
-   }
+ /**
+  * Handles keyboard keyup events.
+  * @param {KeyboardEvent} e - The keyboard event.
+  * @returns {void}
+  */
+ window.addEventListener("keyup", onKeyUp);
  
-   /**
-    * Stops movement, timers and triggers the game over callback.
-    * @param {"win"|"loss"} [reason="loss"] - Outcome that finished the game.
-    * @returns {void}
-@@ -233,63 +254,73 @@ class World {
-     this.stopChickenSpawner();
-     this.stopCloudSpawner();
-     this.disablePlayerControl();
-     this.gameOverTriggered = true;
-   }
+ function onKeyDown(e) {
+   if (handleGameOverKeys(e)) return;
+   if (handleStartStopKeys(e)) return;
+   updateMovementState(e, true);
+ }
  
-   /**
-    * Resets keyboard state to stop all movement.
-    * @returns {void}
-    */
-   disablePlayerControl() {
-     if (!this.keyboard) return;
- 
-     for (const key of Object.keys(this.keyboard)) {
-       this.keyboard[key] = false;
-     }
-     this.character.speed = 0;
-     this.character.speedY = 0;
-   }
- 
-   /**
-    * Handles throwing bottles when the D key is pressed.
-    * @returns {void}
-    */
-   checkThrowObjects() {
--    if (!this.keyboard.D || this.collectedBottles <= 0) return;
-+    if (!this.canThrowBottle()) return;
-+    const bottle = this.createThrowableBottle();
-+    this.throwableObjects.push(bottle);
-+    this.handleBottleThrown();
-+  }
- 
-+  canThrowBottle() {
-+    if (!this.keyboard.D || this.collectedBottles <= 0) return false;
-     const now = Date.now();
--    if (now - this.lastThrowTime < this.throwCooldownMs) return;
-+    if (now - this.lastThrowTime < this.throwCooldownMs) return false;
-+    this.lastThrowTime = now;
-+    return true;
-+  }
- 
--    let bottle = new ThrowableObject(this.character.x, this.character.y + 200);
-+  createThrowableBottle() {
-+    const bottle = new ThrowableObject(this.character.x, this.character.y + 200);
-     bottle.world = this;
--    this.throwableObjects.push(bottle);
--
--    this.lastThrowTime = now;
-+    return bottle;
-+  }
- 
-+  handleBottleThrown() {
-     this.collectedBottles--;
--    let perc = (this.collectedBottles / this.maxBottles) * 100;
-+    const perc = (this.collectedBottles / this.maxBottles) * 100;
-     this.statusBarBottles.setPercentage(perc);
-   }
- 
-   /**
-    * Checks collisions between the character and other objects.
-    * @returns {void}
-    */
-   checkCollisionsCharacter() {
-     for (const enemy of this.level.enemies) {
-       if (
-         enemy.dead ||
-         !this.character.isColliding(enemy) ||
-         MovableObject.isTopBottomCollision(this.character, enemy) ||
-         this.character.isHurt()
-       ) {
-         continue;
-       }
-       this.character.hit();
-       this.statusBarHealth.setPercentage(this.character.energy);
-     }
-   }
- 
-   /**
-    * Detects and resolves collisions when the character stomps chickens.
-    * @returns {void}
-@@ -309,166 +340,192 @@ class World {
-   /**
-    * Handles collisions between the character and collectible bottles.
-    * @returns {void}
-    */
-   checkCollisionsBottle() {
-     for (const obj of this.level.collectableObjects) {
-       if (
-         this.character.isColliding(obj) &&
-         this.collectedBottles < this.maxBottles
-       ) {
-         obj.collect();
-         this.collectedBottles++;
-         const perc = (this.collectedBottles / this.maxBottles) * 100;
-         this.statusBarBottles.setPercentage(perc);
-       }
-     }
-   }
- 
-   /**
-    * Handles collisions between the character and collectible coins.
-    * @returns {void}
-    */
-   checkCollisionsCoins() {
-     for (const obj of this.level.coinObjects) {
-       if (!this.character.isColliding(obj)) continue;
-+      this.collectCoin(obj);
-+    }
-+  }
- 
--      obj.collect();
--      this.collectedCoins++;
--      const perc = (this.collectedCoins / this.maxCoins) * 100;
--      this.statusBarCoins.setPercentage(perc);
-+  collectCoin(obj) {
-+    obj.collect();
-+    this.collectedCoins++;
-+    this.updateCoinStatusBar();
-+    if (this.collectedCoins !== this.maxCoins) return;
-+    this.handleFullCoinStack();
-+  }
- 
--      if (this.collectedCoins === this.maxCoins) {
--        this.character.heal(20);
--        this.statusBarHealth.setPercentage(this.character.energy);
--        this.collectedCoins = 0;
--        this.statusBarCoins.setPercentage(0);
--      }
--    }
-+  updateCoinStatusBar() {
-+    const perc = (this.collectedCoins / this.maxCoins) * 100;
-+    this.statusBarCoins.setPercentage(perc);
-+  }
-+
-+  handleFullCoinStack() {
-+    this.character.heal(20);
-+    this.statusBarHealth.setPercentage(this.character.energy);
-+    this.collectedCoins = 0;
-+    this.statusBarCoins.setPercentage(0);
-   }
- 
-   /**
-    * Checks collisions between thrown bottles and the endboss.
-    * @returns {void}
-    */
-   checkBottleHitsEndboss() {
-     const endboss = this.level.enemies.find((e) => e instanceof Endboss);
-     if (!endboss || endboss.dead) return;
--
-     for (const bottle of this.throwableObjects) {
--      if (bottle.hasSplashed) continue;
--      if (!bottle.isColliding(endboss)) continue;
--
--      this.handleBottleImpact(bottle);
-+      if (this.shouldSkipBottle(bottle, endboss)) continue;
-+      this.processEndbossHit(bottle, endboss);
-+    }
-+  }
- 
--      endboss.hit();
--      this.statusBarEndboss.setPercentage(endboss.energy);
-+  shouldSkipBottle(bottle, target) {
-+    return bottle.hasSplashed || !bottle.isColliding(target);
-+  }
- 
--      if (!this.gameOverTriggered && endboss.energy <= 0) {
--        this.triggerGameOver("win");
--      }
-+  processEndbossHit(bottle, endboss) {
-+    this.handleBottleImpact(bottle);
-+    endboss.hit();
-+    this.statusBarEndboss.setPercentage(endboss.energy);
-+    if (!this.gameOverTriggered && endboss.energy <= 0) {
-+      this.triggerGameOver("win");
-     }
-   }
- 
-   /**
-    * Checks collisions between thrown bottles and regular enemies (chickens).
-    * @returns {void}
-    */
-   checkBottleHitsRegularEnemies() {
-     for (const bottle of this.throwableObjects) {
-       if (bottle.hasSplashed) continue;
-+      this.handleBottleVsChicken(bottle);
-+    }
-+  }
- 
--      for (const enemy of this.level.enemies) {
--        if (
--          enemy.dead ||
--          !(enemy instanceof Chicken || enemy instanceof SmallChicken)
--        ) {
--          continue;
--        }
--        if (!bottle.isColliding(enemy)) continue;
--
--        this.handleBottleImpact(bottle);
--        enemy.die();
--        break;
--      }
-+  handleBottleVsChicken(bottle) {
-+    for (const enemy of this.level.enemies) {
-+      if (!this.isBottleHittingChicken(bottle, enemy)) continue;
-+      this.handleBottleImpact(bottle);
-+      enemy.die();
-+      break;
-     }
-   }
- 
-+  isBottleHittingChicken(bottle, enemy) {
-+    if (enemy.dead) return false;
-+    const isChicken = enemy instanceof Chicken || enemy instanceof SmallChicken;
-+    return isChicken && bottle.isColliding(enemy);
-+  }
-+
-   /**
-    * Stops bottle movement and starts the splash animation.
-    * @param {ThrowableObject} bottle - The bottle that hit something.
-    * @returns {void}
-    */
-   handleBottleImpact(bottle) {
-     if (bottle.hasSplashed) return;
- 
-     bottle.hasSplashed = true;
-     clearInterval(bottle.animationInterval);
-     clearInterval(bottle.throwInterval);
-     clearInterval(bottle.gravityInterval);
-     bottle.playSplashAnimationOnce();
-   }
- 
-   /**
-    * Clears the canvas and draws all game objects.
-    * @returns {void}
-    */
-   draw = () => {
-+    this.clearCanvas();
-+    this.drawBackground();
-+    this.drawHud();
-+    this.drawForeground();
-+    this.resetCamera();
-+    requestAnimationFrame(this.draw);
-+  };
-+
-+  clearCanvas() {
-     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-+  }
- 
--    //background & clouds
-+  drawBackground() {
-     this.ctx.translate(this.camera_x, 0);
-     this.addObjectsToMap(this.level.backgroundObjects);
-     this.addObjectsToMap(this.level.clouds);
-+  }
- 
--    //HUD
-+  drawHud() {
-     this.ctx.translate(-this.camera_x, 0);
-     this.addToMap(this.statusBarHealth);
-     this.addToMap(this.statusBarBottles);
-     this.addToMap(this.statusBarCoins);
--
--    if (
--      this.endboss &&
--      this.endboss.x + this.camera_x >= 0 &&
--      this.endboss.x + this.camera_x <= this.canvas.width
--    ) {
-+    if (this.shouldShowEndbossBar()) {
-       this.addToMap(this.statusBarEndboss);
-     }
-+  }
-+
-+  shouldShowEndbossBar() {
-+    if (!this.endboss) return false;
-+    const x = this.endboss.x + this.camera_x;
-+    return x >= 0 && x <= this.canvas.width;
-+  }
- 
--    //foreground actors
-+  drawForeground() {
-     this.ctx.translate(this.camera_x, 0);
-     this.addToMap(this.character);
-     this.addObjectsToMap(this.level.enemies);
-     this.addObjectsToMap(this.throwableObjects);
-     this.addObjectsToMap(this.level.collectableObjects);
-     this.addObjectsToMap(this.level.coinObjects);
-+  }
- 
--    //reset transform for next frame
-+  resetCamera() {
-     this.ctx.translate(-this.camera_x, 0);
--
--    requestAnimationFrame(this.draw);
--  };
-+  }
- 
-   /**
-    * Adds multiple objects to the canvas.
-    * @param {DrawableObject[]} objects - Objects to add.
-    * @returns {void}
-    */
-   addObjectsToMap(objects) {
-     for (const o of objects) {
-       this.addToMap(o);
-     }
-   }
- 
-   /**
-    * Draws a single movable object and handles direction flipping.
-    * @param {MovableObject} mo - Object to draw.
-    * @returns {void}
-    */
-   addToMap(mo) {
-     if (mo.otherDirection) this.flipImage(mo);
- 
-     mo.draw(this.ctx);
-     //mo.drawFrame(this.ctx);
- 
-     if (mo.otherDirection) this.flipImageBack(mo);
-   }
+ function handleGameOverKeys(e) {
+   if (!isGameOver) return false;
+   if (["Space", "Enter"].includes(e.code)) {
