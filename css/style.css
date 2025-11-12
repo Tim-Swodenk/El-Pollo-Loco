@@ -162,6 +162,8 @@ ul {
 }
 
 .start-screen__button {
+  height: 48px;
+  text-decoration: none;
   justify-self: start;
   padding: 14px 32px;
   border: none;
@@ -181,6 +183,23 @@ ul {
 .start-screen__button:hover {
   transform: translateY(-2px) scale(1.02);
   box-shadow: 0 24px 45px rgba(0, 0, 0, 0.4);
+}
+
+.start-screen__impressum {
+  display: flex;
+  justify-content: flex-end;
+  flex-direction: column;
+}
+
+#impressum-button {
+  height: 32px;
+  display: none;
+  font-weight: 300;
+  background: linear-gradient(135deg, #edda8d, #f99154 55%, #f96b74);
+  padding: 14px 16px;
+  font-size: 0.8rem;
+  justify-content: center;
+  align-items: center;
 }
 
 .game-controls {
@@ -474,19 +493,15 @@ canvas {
     width: 100%;
     padding: clamp(16px, 0vw, 16px);
   }
+
+  .start-screen__content {
+    max-width: none;
+  }
 }
 
 @media (max-width: 700px) {
   body {
     padding: 16px;
-  }
-
-  .start-screen {
-    padding: clamp(20px, 5vw, 32px);
-  }
-
-  .start-screen__content {
-    max-width: none;
   }
 
   .key {
@@ -520,5 +535,55 @@ canvas {
 
   .orientation-warning {
     display: flex;
+  }
+}
+
+@media (max-height: 670px) {
+  footer {
+    display: none;
+  }
+
+  .start-screen {
+    display: flex;
+    min-height: auto;
+  }
+
+  .start-screen__hint {
+    display: none;
+  }
+
+  #impressum-button {
+    display: flex;
+  }
+
+  .start-screen__content {
+    max-width: none;
+  }
+}
+
+@media (max-height: 570px) {
+  body {
+    padding: 0;
+  }
+
+  .start-screen {
+    border-radius: 0;
+    height: 100vh;
+  }
+
+  .start-screen__backdrop {
+    transform: none;
+  }
+}
+
+@media (max-height: 440px) {
+  .start-screen__content {
+    gap: 16px;
+  }
+}
+
+@media (max-height: 370px) {
+  .start-screen__content {
+    gap: 8px;
   }
 }
