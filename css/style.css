@@ -391,8 +391,6 @@ ul {
   left: 0;
   right: 0;
   bottom: clamp(16px, 5vw, 16px);
-  width: min(100%, 720px);
-  margin: 0 auto;
   display: none;
   justify-content: space-between;
   align-items: center;
@@ -425,6 +423,10 @@ ul {
   transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
   touch-action: none;
   user-select: none;
+
+  > img {
+    width: 100%;
+  }
 }
 
 .touch-controls__button.is-active,
@@ -473,7 +475,7 @@ ul {
 canvas {
   background-color: black;
   width: min(100%, 720px);
-  aspect-ratio: 3/2;
+  height: min(100%, 720px);
   background-color: #000;
   border-radius: 24px;
   box-shadow: 0 24px 55px rgba(17, 12, 41, 0.6);
@@ -586,6 +588,12 @@ canvas {
   canvas {
     border-radius: 0;
     border: none;
+    aspect-ratio: 3/2;
+    width: auto;
+  }
+
+  .game-container {
+    height: 100vh;
   }
 }
 
