@@ -110,6 +110,10 @@ class Endboss extends MovableObject {
     this.activateWhenVisible(40);
   }
 
+  /**
+   * Loads all sprite sheets for the endboss.
+   * @returns {void}
+   */
   loadAllImages() {
     this.loadImage(this.IMAGES_ALERT[0]);
     for (const group of this.getImageGroups()) {
@@ -117,6 +121,10 @@ class Endboss extends MovableObject {
     }
   }
 
+  /**
+   * Provides grouped image arrays for batch preloading.
+   * @returns {string[][]}
+   */
   getImageGroups() {
     return [
       this.IMAGES_WAIT,
@@ -129,6 +137,10 @@ class Endboss extends MovableObject {
     ];
   }
 
+  /**
+   * Configures the initial position and collision offsets.
+   * @returns {void}
+   */
   configureStartState() {
     this.x = 2550;
     this.spawnX = this.x;
@@ -212,6 +224,10 @@ class Endboss extends MovableObject {
     this.startAnimationTimer();
   }
 
+  /**
+   * Starts or restarts the animation timer based on the current speed.
+   * @returns {void}
+   */
   startAnimationTimer() {
     if (this.animationIntervalId) clearInterval(this.animationIntervalId);
     this.animationIntervalId = setInterval(
@@ -220,6 +236,10 @@ class Endboss extends MovableObject {
     );
   }
 
+  /**
+   * Plays the appropriate animation frame for the current state.
+   * @returns {void}
+   */
   performAnimationStep() {
     if (performance.now() < this.hurtOverlayUntil) {
       this.playAnimation(this.IMAGES_HURT);
@@ -228,6 +248,11 @@ class Endboss extends MovableObject {
     this.playAnimation(this.getImagesForState(this.currentState));
   }
 
+  /**
+   * Resolves the correct sprite list for a given state.
+   * @param {string} state - Current action state.
+   * @returns {string[]}
+   */
   getImagesForState(state) {
     const map = {
       walkForward: this.IMAGES_WALK,
@@ -255,10 +280,19 @@ class Endboss extends MovableObject {
     this.finishSequenceIfAlive();
   }
 
+  /**
+   * Checks if the sequence should stop due to death.
+   * @returns {boolean}
+   */
   shouldStopSequence() {
     return this.currentState === "dead" || this.dead;
   }
 
+  /**
+   * Runs a single sequence action by name and handles delays.
+   * @param {string} name - Action method name.
+   * @returns {Promise<void>}
+   */
   async runSequenceAction(name) {
     const action = this[name];
     if (typeof action !== "function") return;
@@ -270,6 +304,10 @@ class Endboss extends MovableObject {
     await this.sleep(this.ACTION_DELAYS[name] ?? 1000);
   }
 
+  /**
+   * Resets state after completing a sequence if still alive.
+   * @returns {void}
+   */
   finishSequenceIfAlive() {
     if (this.dead || this.currentState === "dead") return;
     this.currentState = "wait";
@@ -315,10 +353,24 @@ class Endboss extends MovableObject {
     });
   }
 
+  /**
+   * Ensures stale motion promises end when interrupted or the boss dies.
+   * @param {number} id - Movement identifier to compare.
+   * @returns {boolean}
+   */
   shouldContinueMove(id) {
     return id === this._moveId && !this.dead;
   }
 
+  /**
+   * Updates position during animated movement and triggers callbacks.
+   * @param {number} startX - Starting x position.
+   * @param {number} dx - Distance to travel.
+   * @param {number} progress - Progress between 0 and 1.
+   * @param {(progress:number, elapsed:number)=>void} [onProgress] - Optional callback.
+   * @param {number} elapsed - Milliseconds since start.
+   * @returns {void}
+   */
   updateMovePosition(startX, dx, progress, onProgress, elapsed) {
     this.x = startX + dx * progress;
     if (onProgress) onProgress(progress, elapsed);
@@ -392,11 +444,19 @@ class Endboss extends MovableObject {
     ).then(() => this.finishAttackState());
   }
 
+  /**
+   * Sets up state before an attack begins.
+   * @returns {void}
+   */
   prepareAttackState() {
     this.currentState = "attack";
     this.currentImage = 0;
   }
 
+  /**
+   * Computes attack direction and duration based on character position.
+   * @returns {{dx:number,duration:number}}
+   */
   getAttackMotion() {
     const character = this.world?.character;
     const bossCenter = this.x + this.width * 0.5;
@@ -412,6 +472,12 @@ class Endboss extends MovableObject {
     };
   }
 
+  /**
+   * Adjusts attack frames during horizontal movement.
+   * @param {{apex:boolean,lastY:number}} context - Tracks attack progress state.
+   * @param {number} progress - Current interpolation progress.
+   * @returns {void}
+   */
   updateAttackDuringMove(context, progress) {
     if (!context.apex && this.y > context.lastY) {
       this.setImage(this.IMAGES_ATTACK[5]);
@@ -421,6 +487,10 @@ class Endboss extends MovableObject {
     if (progress > 0.85) this.setImage(this.IMAGES_ATTACK[6]);
   }
 
+  /**
+   * Resets state after completing an attack movement.
+   * @returns {void}
+   */
   finishAttackState() {
     if (this.dead) return;
     this.currentState = "wait";
@@ -442,6 +512,10 @@ class Endboss extends MovableObject {
     this.endJumpAttack();
   }
 
+  /**
+   * Prepares and launches a jump attack.
+   * @returns {void}
+   */
   beginJumpAttack() {
     this.isJumpAttackActive = true;
     this.currentState = "jumpAttack";
@@ -449,6 +523,12 @@ class Endboss extends MovableObject {
     this.jump();
   }
 
+  /**
+   * Updates animation frames during the jump attack travel.
+   * @param {{apex:boolean,lastY:number}} context - Jump tracking data.
+   * @param {number} progress - Movement progress.
+   * @returns {void}
+   */
   updateJumpAttackDuringMove(context, progress) {
     if (!context.apex && this.y > context.lastY) {
       this.setImage(this.IMAGES_JUMPATTACK[1]);
@@ -458,6 +538,10 @@ class Endboss extends MovableObject {
     if (progress > 0.85) this.setImage(this.IMAGES_JUMPATTACK[2]);
   }
 
+  /**
+   * Restores defaults after finishing a jump attack.
+   * @returns {void}
+   */
   endJumpAttack() {
     this.isJumpAttackActive = false;
     if (this.currentState === "dead" || this.dead) return;
@@ -481,6 +565,10 @@ class Endboss extends MovableObject {
     this.enrageIfBelowHalfHealth();
   }
 
+  /**
+   * Increases speed and aggressiveness when health drops below half.
+   * @returns {void}
+   */
   enrageIfBelowHalfHealth() {
     if (this.enraged || this.energy > 50) return;
 
@@ -512,6 +600,10 @@ class Endboss extends MovableObject {
     this.scheduleDeathCleanup();
   }
 
+  /**
+   * Clears timers associated with behavior and visibility checks.
+   * @returns {void}
+   */
   stopBehaviorTimers() {
     if (this.behaviorInterval) clearInterval(this.behaviorInterval);
     if (this.visibilityCheckId) {
@@ -520,22 +612,38 @@ class Endboss extends MovableObject {
     }
   }
 
+  /**
+   * Configures the boss for the death animation sequence.
+   * @returns {void}
+   */
   enterDeathState() {
     this.currentState = "dead";
     this.currentImage = 0;
   }
 
+  /**
+   * Schedules cleanup after the death animation has finished.
+   * @returns {void}
+   */
   scheduleDeathCleanup() {
     const delay = this.IMAGES_DEAD.length * this.animationMs;
     setTimeout(() => this.finishDeath(), delay);
   }
 
+  /**
+   * Finalizes death by stopping animations and removing the boss.
+   * @returns {void}
+   */
   finishDeath() {
     if (this.animationIntervalId) clearInterval(this.animationIntervalId);
     this.dead = true;
     this.removeFromWorld();
   }
 
+  /**
+   * Removes the boss instance from the world's enemy list.
+   * @returns {void}
+   */
   removeFromWorld() {
     const enemies = this.world?.level?.enemies;
     if (!enemies) return;

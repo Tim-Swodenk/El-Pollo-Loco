@@ -117,17 +117,30 @@ class World {
     this.totalBottles = this.level.collectableObjects.length;
   }
 
+  /**
+   * Links each enemy in the level to this world instance.
+   * @returns {void}
+   */
   assignWorldToEnemies() {
     for (const enemy of this.level.enemies) {
       this.registerEnemy(enemy);
     }
   }
 
+  /**
+   * Assigns the world reference to all collectable items in the level.
+   * @returns {void}
+   */
   assignWorldToCollectables() {
     this.assignWorldToObjects(this.level.collectableObjects);
     this.assignWorldToObjects(this.level.coinObjects);
   }
 
+  /**
+   * Attaches the current world instance to each provided object.
+   * @param {DrawableObject[]} objects - Objects that should know the world.
+   * @returns {void}
+   */
   assignWorldToObjects(objects) {
     for (const obj of objects) {
       obj.world = this;
@@ -144,12 +157,20 @@ class World {
     this.beginCloudSpawnerInterval();
   }
 
+  /**
+   * Populates the level with a baseline number of clouds.
+   * @returns {void}
+   */
   fillInitialClouds() {
     for (let i = 0; i < 6; i++) {
       this.spawnCloud();
     }
   }
 
+  /**
+   * Starts an interval that keeps the cloud queue filled while cleaning old ones.
+   * @returns {void}
+   */
   beginCloudSpawnerInterval() {
     this.stopCloudSpawner();
     this.cloudSpawnerId = setInterval(() => {
@@ -160,10 +181,19 @@ class World {
     }, 60000);
   }
 
+  /**
+   * Determines whether a cloud is still within the visible area.
+   * @param {Cloud} cloud - Cloud to check.
+   * @returns {boolean}
+   */
   isCloudVisible(cloud) {
     return cloud.x + cloud.width >= 0;
   }
 
+  /**
+   * Creates a new cloud at the current spawn offset and advances the offset.
+   * @returns {void}
+   */
   spawnCloud() {
     const cloud = new Cloud(this.nextCloudSpawnX);
     this.level.clouds.push(cloud);
@@ -189,6 +219,10 @@ class World {
     this.gameLoopIntervalId = setInterval(() => this.gameLoopStep(), 100);
   }
 
+  /**
+   * Executes one cycle of collision checks and game state updates.
+   * @returns {void}
+   */
   gameLoopStep() {
     this.checkCollisionsStomping();
     this.checkCollisionsCharacter();
@@ -200,6 +234,10 @@ class World {
     this.finishGameIfDead();
   }
 
+  /**
+   * Triggers game over when the character has died.
+   * @returns {void}
+   */
   finishGameIfDead() {
     if (!this.gameOverTriggered && this.character.isDead()) {
       this.triggerGameOver("loss");
@@ -282,6 +320,10 @@ class World {
     this.handleBottleThrown();
   }
 
+  /**
+   * Determines whether the player can throw a bottle based on input and cooldowns.
+   * @returns {boolean}
+   */
   canThrowBottle() {
     if (!this.keyboard.D || this.collectedBottles <= 0) return false;
     const now = Date.now();
@@ -290,12 +332,20 @@ class World {
     return true;
   }
 
+  /**
+   * Creates a throwable bottle at the character's current position.
+   * @returns {ThrowableObject}
+   */
   createThrowableBottle() {
     const bottle = new ThrowableObject(this.character.x, this.character.y + 200);
     bottle.world = this;
     return bottle;
   }
 
+  /**
+   * Updates state after a bottle has been thrown and reduces inventory.
+   * @returns {void}
+   */
   handleBottleThrown() {
     this.collectedBottles--;
     const perc = (this.collectedBottles / this.maxBottles) * 100;
@@ -366,6 +416,11 @@ class World {
     }
   }
 
+  /**
+   * Handles collection logic for a single coin.
+   * @param {CollectableCoin} obj - Coin that was collected.
+   * @returns {void}
+   */
   collectCoin(obj) {
     obj.collect();
     this.collectedCoins++;
@@ -374,11 +429,19 @@ class World {
     this.handleFullCoinStack();
   }
 
+  /**
+   * Refreshes the coin status bar based on collected coins.
+   * @returns {void}
+   */
   updateCoinStatusBar() {
     const perc = (this.collectedCoins / this.maxCoins) * 100;
     this.statusBarCoins.setPercentage(perc);
   }
 
+  /**
+   * Applies effects when the player reaches the maximum coin count.
+   * @returns {void}
+   */
   handleFullCoinStack() {
     this.character.heal(20);
     this.statusBarHealth.setPercentage(this.character.energy);
@@ -399,10 +462,22 @@ class World {
     }
   }
 
+  /**
+   * Skips processing if the bottle already splashed or misses the target.
+   * @param {ThrowableObject} bottle - Bottle being evaluated.
+   * @param {MovableObject} target - Target to test collision against.
+   * @returns {boolean}
+   */
   shouldSkipBottle(bottle, target) {
     return bottle.hasSplashed || !bottle.isColliding(target);
   }
 
+  /**
+   * Handles state updates when a bottle hits the endboss.
+   * @param {ThrowableObject} bottle - Bottle that struck the endboss.
+   * @param {Endboss} endboss - Boss being damaged.
+   * @returns {void}
+   */
   processEndbossHit(bottle, endboss) {
     this.handleBottleImpact(bottle);
     endboss.hit();
@@ -423,6 +498,11 @@ class World {
     }
   }
 
+  /**
+   * Processes a bottle against all chickens until a hit occurs.
+   * @param {ThrowableObject} bottle - Active bottle instance.
+   * @returns {void}
+   */
   handleBottleVsChicken(bottle) {
     for (const enemy of this.level.enemies) {
       if (!this.isBottleHittingChicken(bottle, enemy)) continue;
@@ -432,6 +512,12 @@ class World {
     }
   }
 
+  /**
+   * Checks if a bottle collides with a live chicken enemy.
+   * @param {ThrowableObject} bottle - Bottle to test.
+   * @param {MovableObject} enemy - Enemy candidate.
+   * @returns {boolean}
+   */
   isBottleHittingChicken(bottle, enemy) {
     if (enemy.dead) return false;
     const isChicken = enemy instanceof Chicken || enemy instanceof SmallChicken;
@@ -466,16 +552,28 @@ class World {
     requestAnimationFrame(this.draw);
   };
 
+  /**
+   * Clears the entire rendering area of the canvas.
+   * @returns {void}
+   */
   clearCanvas() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
+  /**
+   * Draws background objects and clouds with the current camera offset.
+   * @returns {void}
+   */
   drawBackground() {
     this.ctx.translate(this.camera_x, 0);
     this.addObjectsToMap(this.level.backgroundObjects);
     this.addObjectsToMap(this.level.clouds);
   }
 
+  /**
+   * Renders status bars without camera translation applied.
+   * @returns {void}
+   */
   drawHud() {
     this.ctx.translate(-this.camera_x, 0);
     this.addToMap(this.statusBarHealth);
@@ -486,12 +584,20 @@ class World {
     }
   }
 
+  /**
+   * Indicates whether the endboss health bar is within the current viewport.
+   * @returns {boolean}
+   */
   shouldShowEndbossBar() {
     if (!this.endboss) return false;
     const x = this.endboss.x + this.camera_x;
     return x >= 0 && x <= this.canvas.width;
   }
 
+  /**
+   * Draws all foreground entities including the player, enemies and items.
+   * @returns {void}
+   */
   drawForeground() {
     this.ctx.translate(this.camera_x, 0);
     this.addToMap(this.character);
@@ -501,6 +607,10 @@ class World {
     this.addObjectsToMap(this.level.coinObjects);
   }
 
+  /**
+   * Resets the camera transform after drawing.
+   * @returns {void}
+   */
   resetCamera() {
     this.ctx.translate(-this.camera_x, 0);
   }

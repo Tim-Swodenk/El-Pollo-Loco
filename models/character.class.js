@@ -144,6 +144,10 @@ class Character extends MovableObject {
     this.startAnimationLoop();
   }
 
+  /**
+   * Runs the movement logic at 60 FPS based on keyboard input.
+   * @returns {void}
+   */
   startMovementLoop() {
     setInterval(() => {
       this.handleHorizontalMovement();
@@ -153,6 +157,10 @@ class Character extends MovableObject {
     }, 1000 / 60);
   }
 
+  /**
+   * Moves the character left or right depending on input keys.
+   * @returns {void}
+   */
   handleHorizontalMovement() {
     if (this.world.keyboard.RIGHT && this.x < this.world.level.level_end_x) {
       this.moveRight();
@@ -167,6 +175,10 @@ class Character extends MovableObject {
     }
   }
 
+  /**
+   * Initiates a jump when the space bar is pressed and the player is grounded.
+   * @returns {void}
+   */
   handleJumpInput() {
     if (this.world.keyboard.SPACE && !this.isAboveGround()) {
       this.jump();
@@ -174,18 +186,30 @@ class Character extends MovableObject {
     }
   }
 
+  /**
+   * Marks the character as active when attack or jump keys are used.
+   * @returns {void}
+   */
   handleActivityKeys() {
     if (this.world.keyboard.SPACE || this.world.keyboard.D) {
       this.setActive();
     }
   }
 
+  /**
+   * Periodically updates the animation state for the character.
+   * @returns {void}
+   */
   startAnimationLoop() {
     setInterval(() => {
       this.updateAnimationState();
     }, 60);
   }
 
+  /**
+   * Chooses the correct animation based on movement, damage and death states.
+   * @returns {void}
+   */
   updateAnimationState() {
     if (this.isDead()) {
       this.playLoop(this.IMAGES_DEAD);
@@ -200,6 +224,10 @@ class Character extends MovableObject {
     }
   }
 
+  /**
+   * Plays idle or walking animations depending on keyboard state and idle timer.
+   * @returns {void}
+   */
   playIdleOrWalking() {
     if (this.world.keyboard.RIGHT || this.world.keyboard.LEFT) {
       this.setActive();
