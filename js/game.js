@@ -11,6 +11,10 @@ const BASE_H = 480;
 
 document.addEventListener("DOMContentLoaded", initGameUI);
 
+/**
+ * Initializes the UI wiring once the DOM is ready.
+ * @returns {void}
+ */
 function initGameUI() {
   let buttons = getButtons();
   bindPrimaryButtons(buttons);
@@ -20,6 +24,10 @@ function initGameUI() {
   fitCanvasToScreen();
 }
 
+/**
+ * Collects primary control buttons from the DOM.
+ * @returns {{start: HTMLElement|null, restart: HTMLElement|null, fullscreen: HTMLElement|null, exit: HTMLElement|null}}
+ */
 function getButtons() {
   return {
     start: document.getElementById("start-button"),
@@ -29,6 +37,11 @@ function getButtons() {
   };
 }
 
+/**
+ * Binds click handlers to the primary buttons.
+ * @param {Object} buttons - Button references.
+ * @returns {void}
+ */
 function bindPrimaryButtons(buttons) {
   bindButton(buttons.start, startGame);
   bindButton(buttons.restart, restartGame);
@@ -36,10 +49,20 @@ function bindPrimaryButtons(buttons) {
   bindButton(buttons.exit, exitToHome);
 }
 
+/**
+ * Safely attaches a click handler when the button exists.
+ * @param {HTMLElement|null} button - Target button.
+ * @param {Function} handler - Handler to register.
+ * @returns {void}
+ */
 function bindButton(button, handler) {
   button?.addEventListener("click", handler);
 }
 
+/**
+ * Registers listeners that react to layout-affecting events.
+ * @returns {void}
+ */
 function registerLayoutObservers() {
   let fullscreenEvents = [
     "fullscreenchange",
@@ -54,38 +77,26 @@ function registerLayoutObservers() {
   window.addEventListener("blur", resetTouchControls);
 }
 
+/**
+ * Sets up touch control buttons and their pointer handlers.
+ * @returns {void}
+ */
 function registerTouchControls() {
   let container = document.querySelector(".touch-controls");
   if (!container) return;
-  touchControlButtons = Array.from(
-    container.querySelectorAll("[data-key]")
-  );
+  touchControlButtons = Array.from(container.querySelectorAll("[data-key]"));
   touchControlButtons.forEach((button) => {
     let key = button.dataset.key;
     if (!key) return;
     let handlePress = (event) => {
       event.preventDefault();
-      button.classList.add("is-active");
-      keyboard[key] = true;
-      if (typeof button.setPointerCapture === "function") {
-        try {
-          button.setPointerCapture(event.pointerId);
-        } catch (err) {
-          /* Pointer capture might fail on some browsers */
-        }
-      }
+      setTouchButtonState(button, key, true);
+      togglePointerCapture(button, event, true);
     };
     let handleRelease = (event) => {
       event.preventDefault();
-      button.classList.remove("is-active");
-      keyboard[key] = false;
-      if (typeof button.releasePointerCapture === "function") {
-        try {
-          button.releasePointerCapture(event.pointerId);
-        } catch (err) {
-          /* Ignore release errors */
-        }
-      }
+      setTouchButtonState(button, key, false);
+      togglePointerCapture(button, event, false);
     };
     button.addEventListener("pointerdown", handlePress);
     button.addEventListener("pointerup", handleRelease);
@@ -95,12 +106,44 @@ function registerTouchControls() {
   });
 }
 
+/**
+ * Toggles the visual and logical state of a touch control button.
+ * @param {HTMLElement} button - Button to update.
+ * @param {string} key - Keyboard mapping key.
+ * @param {boolean} isActive - Whether the button is pressed.
+ * @returns {void}
+ */
+function setTouchButtonState(button, key, isActive) {
+  if (!key) return;
+  button.classList.toggle("is-active", isActive);
+  keyboard[key] = isActive;
+}
+
+/**
+ * Safely toggles pointer capture on a button to keep drag interactions stable.
+ * @param {HTMLElement} button - Target button.
+ * @param {PointerEvent} event - Pointer event used for capture.
+ * @param {boolean} shouldCapture - True to capture, false to release.
+ * @returns {void}
+ */
+function togglePointerCapture(button, event, shouldCapture) {
+  let method = shouldCapture ? "setPointerCapture" : "releasePointerCapture";
+  if (typeof button[method] !== "function") return;
+  try {
+    button[method](event.pointerId);
+  } catch (err) {
+    /* Capture might fail on unsupported browsers */
+  }
+}
+
+/**
+ * Resets all touch controls to their inactive state.
+ * @returns {void}
+ */
 function resetTouchControls() {
   touchControlButtons.forEach((button) => {
     let key = button.dataset.key;
-    if (!key) return;
-    button.classList.remove("is-active");
-    keyboard[key] = false;
+    setTouchButtonState(button, key, false);
   });
 }
 
@@ -143,6 +186,10 @@ function startGame() {
   hasGameStarted = true;
 }
 
+/**
+ * Retrieves the main UI containers used for game transitions.
+ * @returns {{startScreen: HTMLElement|null, gameContainer: HTMLElement|null, startButton: HTMLElement|null}}
+ */
 function getGameScreens() {
   return {
     startScreen: document.getElementById("start-screen"),
@@ -151,12 +198,23 @@ function getGameScreens() {
   };
 }
 
+/**
+ * Hides the start screen and removes focus from the start button.
+ * @param {HTMLElement|null} startScreen - Screen to hide.
+ * @param {HTMLElement|null} startButton - Button to blur.
+ * @returns {void}
+ */
 function hideStartScreen(startScreen, startButton) {
   startButton?.blur();
   startScreen?.classList.add("is-hidden");
   startScreen?.setAttribute("inert", "");
 }
 
+/**
+ * Reveals the game container so the canvas becomes visible.
+ * @param {HTMLElement|null} gameContainer - Container to show.
+ * @returns {void}
+ */
 function showGameContainer(gameContainer) {
   gameContainer?.classList.remove("is-hidden");
   gameContainer?.removeAttribute("inert");
@@ -175,6 +233,10 @@ function handleGameOver(reason = "loss") {
   revealGameOverScreen(elements);
 }
 
+/**
+ * Collects DOM references used to present the game over overlay.
+ * @returns {{screen: HTMLElement|null, restartButton: HTMLElement|null, titleImage: HTMLImageElement|null, message: HTMLElement|null}}
+ */
 function getGameOverElements() {
   return {
     screen: document.getElementById("game-over-screen"),
@@ -184,6 +246,12 @@ function getGameOverElements() {
   };
 }
 
+/**
+ * Updates the game over overlay with the appropriate imagery and text.
+ * @param {Object} elements - Game over element references.
+ * @param {string} reason - Outcome reason (win or loss).
+ * @returns {void}
+ */
 function updateGameOverContent(elements, reason) {
   if (!elements.titleImage || !elements.message) return;
   let content = getGameOverContent(reason);
@@ -192,6 +260,11 @@ function updateGameOverContent(elements, reason) {
   elements.message.textContent = content.text;
 }
 
+/**
+ * Provides image and text content based on the game over reason.
+ * @param {string} reason - Either "win" or "loss".
+ * @returns {{src: string, alt: string, text: string}} Content describing the outcome.
+ */
 function getGameOverContent(reason) {
   if (reason === "win") {
     return {
@@ -207,6 +280,11 @@ function getGameOverContent(reason) {
   };
 }
 
+/**
+ * Reveals the game over screen and moves focus to the restart button.
+ * @param {Object} elements - Game over element references.
+ * @returns {void}
+ */
 function revealGameOverScreen(elements) {
   elements.screen.classList.remove("is-hidden");
   elements.screen.removeAttribute("inert");
@@ -214,11 +292,22 @@ function revealGameOverScreen(elements) {
 }
 
 /**
- * Reloads the page to restart the game.
+ * Resets the game state without reloading the page.
  * @returns {void}
  */
 function restartGame() {
-  window.location.reload();
+  if (!hasGameStarted) return;
+
+  let elements = getGameOverElements();
+  elements.restartButton?.blur();
+
+  resetWorldForRestart();
+  hideGameOverScreen(elements.screen);
+  showGameContainer(document.getElementById("game-container"));
+
+  isGameOver = false;
+  hasGameStarted = true;
+  init();
 }
 
 /**
@@ -235,6 +324,10 @@ function exitToHome() {
   updateFullscreenButtonState();
 }
 
+/**
+ * Collects UI elements required to exit the game view.
+ * @returns {{startScreen: HTMLElement|null, gameContainer: HTMLElement|null, gameOverScreen: HTMLElement|null, exitButton: HTMLElement|null, startButton: HTMLElement|null}}
+ */
 function getExitElements() {
   return {
     startScreen: document.getElementById("start-screen"),
@@ -245,29 +338,55 @@ function getExitElements() {
   };
 }
 
+/**
+ * Exits fullscreen mode when it is active.
+ * @returns {void}
+ */
 function exitFullscreenIfNeeded() {
   if (isFullscreenActive()) exitFullscreen();
 }
 
+/**
+ * Resets the world state so a new game can start cleanly.
+ * @returns {void}
+ */
 function resetWorldState() {
-  destroyWorld();
-  recreateLevel();
-  keyboard = new Keyboard();
+  resetWorldForRestart();
   hasGameStarted = false;
   isGameOver = false;
 }
 
+function resetWorldForRestart() {
+  destroyWorld();
+  recreateLevel();
+  keyboard = new Keyboard();
+  resetTouchControls();
+}
+
+/**
+ * Destroys the current world instance if it exists.
+ * @returns {void}
+ */
 function destroyWorld() {
   if (!world) return;
   world.destroy();
   world = null;
 }
 
+/**
+ * Recreates the default level when the factory is available.
+ * @returns {void}
+ */
 function recreateLevel() {
   if (typeof createLevel1 !== "function") return;
   level1 = createLevel1();
 }
 
+/**
+ * Restores UI to the initial state after leaving the game.
+ * @param {Object} ui - References to UI elements.
+ * @returns {void}
+ */
 function resetUiState(ui) {
   hideGameOverScreen(ui.gameOverScreen);
   showStartScreen(ui.startScreen);
@@ -275,16 +394,31 @@ function resetUiState(ui) {
   ui.startButton?.focus();
 }
 
+/**
+ * Hides the game over overlay.
+ * @param {HTMLElement|null} gameOverScreen - Screen to hide.
+ * @returns {void}
+ */
 function hideGameOverScreen(gameOverScreen) {
   gameOverScreen?.classList.add("is-hidden");
   gameOverScreen?.setAttribute("inert", "");
 }
 
+/**
+ * Shows the start screen again.
+ * @param {HTMLElement|null} startScreen - Screen to show.
+ * @returns {void}
+ */
 function showStartScreen(startScreen) {
   startScreen?.classList.remove("is-hidden");
   startScreen?.removeAttribute("inert");
 }
 
+/**
+ * Hides the game container so gameplay stops being visible.
+ * @param {HTMLElement|null} gameContainer - Container to hide.
+ * @returns {void}
+ */
 function hideGameContainer(gameContainer) {
   gameContainer?.classList.add("is-hidden");
   gameContainer?.setAttribute("inert", "");
@@ -306,6 +440,12 @@ function fitCanvasToScreen() {
   }
 }
 
+/**
+ * Scales the canvas when fullscreen is active.
+ * @param {HTMLCanvasElement} el - Canvas element.
+ * @param {number} dpr - Device pixel ratio.
+ * @returns {void}
+ */
 function fitCanvasFullscreen(el, dpr) {
   let size = getFullscreenCanvasSize();
   setCanvasStyle(el, size.targetW, size.targetH);
@@ -314,6 +454,10 @@ function fitCanvasFullscreen(el, dpr) {
   applyCanvasScale(el, size.targetW / BASE_W, dpr);
 }
 
+/**
+ * Calculates the best possible fullscreen canvas size within the viewport.
+ * @returns {{targetW: number, targetH: number}} Width and height preserving aspect ratio.
+ */
 function getFullscreenCanvasSize() {
   let w = window.innerWidth;
   let h = window.innerHeight;
@@ -324,11 +468,24 @@ function getFullscreenCanvasSize() {
   };
 }
 
+/**
+ * Applies inline sizing styles to the canvas element.
+ * @param {HTMLCanvasElement} el - Canvas element.
+ * @param {number} width - Target CSS width.
+ * @param {number} height - Target CSS height.
+ * @returns {void}
+ */
 function setCanvasStyle(el, width, height) {
   el.style.width = `${width}px`;
   el.style.height = `${height}px`;
 }
 
+/**
+ * Calculates the render size in physical pixels based on device pixel ratio.
+ * @param {{targetW: number, targetH: number}} size - CSS pixel size.
+ * @param {number} dpr - Device pixel ratio.
+ * @returns {{width: number, height: number}} Calculated render size.
+ */
 function getRenderSize(size, dpr) {
   return {
     width: Math.round(size.targetW * dpr),
@@ -336,17 +493,37 @@ function getRenderSize(size, dpr) {
   };
 }
 
+/**
+ * Updates the canvas resolution if the dimensions changed.
+ * @param {HTMLCanvasElement} el - Canvas element.
+ * @param {number} width - Desired width.
+ * @param {number} height - Desired height.
+ * @returns {void}
+ */
 function updateCanvasResolution(el, width, height) {
   if (el.width === width && el.height === height) return;
   el.width = width;
   el.height = height;
 }
 
+/**
+ * Applies a transform to keep canvas rendering sharp with scaling.
+ * @param {HTMLCanvasElement} el - Canvas element.
+ * @param {number} scale - Scale factor relative to base size.
+ * @param {number} dpr - Device pixel ratio.
+ * @returns {void}
+ */
 function applyCanvasScale(el, scale, dpr) {
   let ctx = el.getContext("2d");
   ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
 }
 
+/**
+ * Applies canvas sizing when not in fullscreen mode.
+ * @param {HTMLCanvasElement} el - Canvas element.
+ * @param {number} dpr - Device pixel ratio.
+ * @returns {void}
+ */
 function fitCanvasWindowed(el, dpr) {
   clearCanvasStyle(el);
   let render = getRenderSize({ targetW: BASE_W, targetH: BASE_H }, dpr);
@@ -354,6 +531,11 @@ function fitCanvasWindowed(el, dpr) {
   applyCanvasScale(el, 1, dpr);
 }
 
+/**
+ * Removes inline sizing styles from the canvas element.
+ * @param {HTMLCanvasElement} el - Canvas element.
+ * @returns {void}
+ */
 function clearCanvasStyle(el) {
   el.style.width = "";
   el.style.height = "";
@@ -373,12 +555,22 @@ window.addEventListener("keydown", onKeyDown);
  */
 window.addEventListener("keyup", onKeyUp);
 
+/**
+ * Responds to keydown events to manage game flow and movement.
+ * @param {KeyboardEvent} e - The keyboard event.
+ * @returns {void}
+ */
 function onKeyDown(e) {
   if (handleGameOverKeys(e)) return;
   if (handleStartStopKeys(e)) return;
   updateMovementState(e, true);
 }
 
+/**
+ * Handles keyboard interactions when the game is over.
+ * @param {KeyboardEvent} e - The keyboard event.
+ * @returns {boolean} True if the event was consumed.
+ */
 function handleGameOverKeys(e) {
   if (!isGameOver) return false;
   if (["Space", "Enter"].includes(e.code)) {
@@ -393,6 +585,11 @@ function handleGameOverKeys(e) {
   return true;
 }
 
+/**
+ * Handles start and escape keys during normal play.
+ * @param {KeyboardEvent} e - The keyboard event.
+ * @returns {boolean} True if the event was consumed.
+ */
 function handleStartStopKeys(e) {
   if (!hasGameStarted && ["Space", "Enter"].includes(e.code)) {
     e.preventDefault();
@@ -407,6 +604,12 @@ function handleStartStopKeys(e) {
   return false;
 }
 
+/**
+ * Updates movement flags on the keyboard helper based on key state.
+ * @param {KeyboardEvent} e - The keyboard event.
+ * @param {boolean} isPressed - Whether the key is pressed.
+ * @returns {void}
+ */
 function updateMovementState(e, isPressed) {
   let mapping = {
     39: "RIGHT",
@@ -420,6 +623,11 @@ function updateMovementState(e, isPressed) {
   if (key) keyboard[key] = isPressed;
 }
 
+/**
+ * Clears movement flags when keys are released.
+ * @param {KeyboardEvent} e - The keyboard event.
+ * @returns {void}
+ */
 function onKeyUp(e) {
   updateMovementState(e, false);
 }

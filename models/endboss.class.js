@@ -6,12 +6,12 @@ class Endboss extends MovableObject {
   //base stats & size
   height = 400;
   width = 250;
-  y = 60;
+  y = 40;
   energy = 100;
-  speed = 15;
+  speed = 18;
 
   //animation + behavior
-  animationMs = 200;
+  animationMs = 180;
   animationIntervalId = null;
   behaviorInterval = null;
   visibilityCheckId = null;
@@ -25,25 +25,33 @@ class Endboss extends MovableObject {
 
   //movement control
   _moveId = 0;
-  walkForwardDistance = 300;
-  walkBackwardDistance = 300;
-  attackDistance = 20;
-  jumpAttackDistance = 300;
+  walkForwardDistance = 400;
+  walkBackwardDistance = 400;
+  attackDistance = 40;
+  jumpAttackDistance = 400;
 
   SEQUENCES = [
     ["alert", "jumpAttack", "walkBackward"],
     ["walkForward", "alert", "walkBackward"],
     ["alert", "walkForward", "walkBackward"],
     ["walkForward", "alert", "attack", "walkBackward"],
+    [
+      "jumpAttack",
+      "attack",
+      "walkForward",
+      "walkBackward",
+      "attack",
+      "walkBackward",
+    ],
   ];
 
   ACTION_DELAYS = {
     walkForward: 1000,
     walkBackward: 1000,
-    alert: 500,
-    attack: 800,
+    alert: 300,
+    attack: 600,
     jumpAttack: 800,
-    wait: 1000,
+    wait: 800,
   };
 
   IMAGES_WAIT = [
@@ -98,7 +106,7 @@ class Endboss extends MovableObject {
     this.loadAllImages();
     this.configureStartState();
     this.applyGravity();
-    this.activateWhenVisible(80);
+    this.activateWhenVisible(40);
   }
 
   loadAllImages() {
@@ -292,7 +300,9 @@ class Endboss extends MovableObject {
    */
   moveXOverTime(dx, duration, onProgress) {
     return new Promise((resolve) => {
-      const start = performance.now(), startX = this.x, id = ++this._moveId;
+      const start = performance.now(),
+        startX = this.x,
+        id = ++this._moveId;
       const step = (now) => {
         if (!this.shouldContinueMove(id)) return resolve();
         const progress = Math.min((now - start) / duration, 1);
@@ -425,10 +435,8 @@ class Endboss extends MovableObject {
     this.beginJumpAttack();
     const context = { apex: false, lastY: this.y };
     const duration = this.ACTION_DELAYS.jumpAttack;
-    await this.moveXOverTime(
-      -this.jumpAttackDistance,
-      duration,
-      (p) => this.updateJumpAttackDuringMove(context, p)
+    await this.moveXOverTime(-this.jumpAttackDistance, duration, (p) =>
+      this.updateJumpAttackDuringMove(context, p)
     );
     this.endJumpAttack();
   }
