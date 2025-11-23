@@ -15,6 +15,7 @@ class Endboss extends MovableObject {
   animationIntervalId = null;
   behaviorInterval = null;
   visibilityCheckId = null;
+  enraged = false;
 
   //state flags
   currentState = "wait";
@@ -477,6 +478,25 @@ class Endboss extends MovableObject {
     }
     this.hurtOverlayUntil =
       performance.now() + this.IMAGES_HURT.length * this.animationMs;
+    this.enrageIfBelowHalfHealth();
+  }
+
+  enrageIfBelowHalfHealth() {
+    if (this.enraged || this.energy > 50) return;
+
+    this.enraged = true;
+    this.speed += 5;
+    this.animationMs = 150;
+    Object.assign(this.ACTION_DELAYS, {
+      walkForward: 750,
+      walkBackward: 750,
+      alert: 300,
+      attack: 650,
+      jumpAttack: 650,
+      wait: 600,
+    });
+
+    this.startAnimationTimer();
   }
 
   /**
