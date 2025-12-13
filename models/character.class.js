@@ -249,25 +249,54 @@ class Character extends MovableObject {
    * @returns {void}
    */
   jumpAnimation() {
+    this.ensureJumpAnimationActive();
+
+    let sequence = this.IMAGES_JUMPING;
+    let progress = this.calculateJumpProgress();
+    let frameIndex = this.getJumpFrameIndex(progress, sequence.length);
+
+    this.setJumpFrame(sequence, frameIndex);
+  }
+
+  /**
+   * Resets jump animation sequence when entering jump state.
+   * @returns {void}
+   */
+  ensureJumpAnimationActive() {
     if (this.currentAnimation !== this.IMAGES_JUMPING) {
       this.currentAnimation = this.IMAGES_JUMPING;
       this.currentImage = 0;
     }
+  }
+
+  /**
+   * Calculates the progress of the jump from ascent to descent.
+   * @returns {number} Jump progress ranging from 0 (takeoff) to 2 (landing).
+   */
+  calculateJumpProgress() {
     let groundStart = Character.GROUND_LEVEL;
     let jumpPeak = -47.5;
     let descentStart = Character.GROUND_LEVEL;
-    let sequence = this.IMAGES_JUMPING;
-    let progress;
 
     if (this.y <= groundStart && this.y >= jumpPeak) {
-      progress = (groundStart - this.y) / (groundStart - jumpPeak);
-    } else if (this.y < groundStart && this.y < jumpPeak) {
-      progress = 1;
-    } else {
-      progress = (this.y - jumpPeak) / (descentStart - jumpPeak);
-      progress = 1 + progress;
+      return (groundStart - this.y) / (groundStart - jumpPeak);
     }
 
+    if (this.y < groundStart && this.y < jumpPeak) {
+      return 1;
+    }
+
+    let descentProgress = (this.y - jumpPeak) / (descentStart - jumpPeak);
+    return 1 + descentProgress;
+  }
+
+  /**
+   * Converts jump progress into a frame index of the animation sequence.
+   * @param {number} progress - Jump progress between 0 and 2.
+   * @param {number} sequenceLength - Number of frames in the jump sequence.
+   * @returns {number} Frame index within the jump animation sequence.
+   */
+  getJumpFrameIndex(progress, sequenceLength) {
     let frameIndex;
 
     if (progress <= 1) {
@@ -275,8 +304,17 @@ class Character extends MovableObject {
     } else {
       frameIndex = 3 + Math.round((progress - 1) * 5);
     }
-    frameIndex = Math.max(0, Math.min(sequence.length - 1, frameIndex));
 
+    return Math.max(0, Math.min(sequenceLength - 1, frameIndex));
+  }
+
+  /**
+   * Applies the calculated jump frame to the character image.
+   * @param {string[]} sequence - Jump animation image paths.
+   * @param {number} frameIndex - Index of the frame to display.
+   * @returns {void}
+   */
+  setJumpFrame(sequence, frameIndex) {
     this.img = this.imageCache[sequence[frameIndex]];
   }
 
