@@ -142,7 +142,7 @@ class Endboss extends MovableObject {
    * @returns {void}
    */
   configureStartState() {
-    this.x = 2550;
+    this.x = 2700;
     this.spawnX = this.x;
     this.offset = { top: 80, right: 5, bottom: 5, left: 25 };
   }
