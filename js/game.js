@@ -34,6 +34,7 @@ function initGameUI() {
   bindPrimaryButtons(buttons);
   initializeAudio(buttons.mute, buttons.touchMute);
   registerLayoutObservers();
+  registerContextMenuBlocks(buttons);
   registerTouchControls();
   updateFullscreenButtonState();
   fitCanvasToScreen();
@@ -124,6 +125,36 @@ function persistMutePreference() {
  */
 function bindButton(button, handler) {
   button?.addEventListener("click", handler);
+}
+
+/**
+ * Prevents context menu interactions on the game surface and control buttons.
+ * @param {Object} buttons - Collection of primary buttons.
+ * @returns {void}
+ */
+function registerContextMenuBlocks(buttons) {
+  let gameContainer = document.getElementById("game-container");
+  let canvasEl = document.getElementById("canvas");
+  let touchControls = document.querySelectorAll(".touch-controls__button");
+
+  let elements = [
+    gameContainer,
+    canvasEl,
+    buttons.start,
+    buttons.restart,
+    buttons.fullscreen,
+    buttons.exit,
+    buttons.mute,
+    buttons.touchMute,
+    ...touchControls,
+  ].filter(Boolean);
+
+  elements.forEach((el) =>
+    el.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      resetTouchControls();
+    })
+  );
 }
 
 /**
