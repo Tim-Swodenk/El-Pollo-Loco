@@ -4,6 +4,11 @@ let keyboard = new Keyboard();
 let hasGameStarted = false;
 let isGameOver = false;
 let touchControlButtons = [];
+let backgroundMusic;
+let muteButton;
+let isMuted = false;
+
+const MUSIC_SRC = "audio/background-music.wav";
 
 // Logical base size of the game world
 const BASE_W = 720;
@@ -18,6 +23,7 @@ document.addEventListener("DOMContentLoaded", initGameUI);
 function initGameUI() {
   let buttons = getButtons();
   bindPrimaryButtons(buttons);
+  initializeAudio(buttons.mute);
   registerLayoutObservers();
   registerTouchControls();
   updateFullscreenButtonState();
@@ -34,6 +40,7 @@ function getButtons() {
     restart: document.getElementById("restart-button"),
     fullscreen: document.getElementById("fullscreen-button"),
     exit: document.getElementById("exit-button"),
+    mute: document.getElementById("mute-button"),
   };
 }
 
@@ -47,6 +54,15 @@ function bindPrimaryButtons(buttons) {
   bindButton(buttons.restart, restartGame);
   bindButton(buttons.fullscreen, toggleFullscreen);
   bindButton(buttons.exit, exitToHome);
+  bindButton(buttons.mute, toggleMute);
+}
+
+function initializeAudio(button) {
+  backgroundMusic = new Audio(MUSIC_SRC);
+  backgroundMusic.loop = true;
+  backgroundMusic.volume = 0.35;
+  muteButton = button;
+  updateMuteButtonState();
 }
 
 /**
@@ -136,6 +152,40 @@ function togglePointerCapture(button, event, shouldCapture) {
   }
 }
 
+function startBackgroundMusic() {
+  if (!backgroundMusic) return;
+  backgroundMusic.muted = isMuted;
+  if (backgroundMusic.paused) {
+    backgroundMusic.currentTime = 0;
+    backgroundMusic.play().catch(() => {});
+  }
+}
+
+function stopBackgroundMusic() {
+  if (!backgroundMusic) return;
+  backgroundMusic.pause();
+  backgroundMusic.currentTime = 0;
+}
+
+function toggleMute() {
+  isMuted = !isMuted;
+  applyMuteState();
+}
+
+function applyMuteState() {
+  if (backgroundMusic) {
+    backgroundMusic.muted = isMuted;
+  }
+  updateMuteButtonState();
+}
+
+function updateMuteButtonState() {
+  if (!muteButton) return;
+  muteButton.classList.toggle("is-muted", isMuted);
+  muteButton.setAttribute("aria-pressed", isMuted ? "true" : "false");
+  muteButton.setAttribute("aria-label", isMuted ? "Sound off" : "Sound on");
+}
+
 /**
  * Resets all touch controls to their inactive state.
  * @returns {void}
@@ -183,6 +233,7 @@ function startGame() {
   hideStartScreen(ui.startScreen, ui.startButton);
   showGameContainer(ui.gameContainer);
   init();
+  startBackgroundMusic();
   hasGameStarted = true;
 }
 
@@ -308,6 +359,7 @@ function restartGame() {
   isGameOver = false;
   hasGameStarted = true;
   init();
+  startBackgroundMusic();
 }
 
 /**
@@ -318,6 +370,7 @@ function exitToHome() {
   let ui = getExitElements();
   ui.exitButton?.blur();
   exitFullscreenIfNeeded();
+  stopBackgroundMusic();
   resetWorldState();
   resetTouchControls();
   resetUiState(ui);
@@ -354,6 +407,7 @@ function resetWorldState() {
   resetWorldForRestart();
   hasGameStarted = false;
   isGameOver = false;
+  stopBackgroundMusic();
 }
 
 function resetWorldForRestart() {

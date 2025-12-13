@@ -224,6 +224,42 @@ ul {
   box-shadow: 0 16px 30px rgba(0, 0, 0, 0.3);
 }
 
+.game-controls__button--icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+}
+
+.game-controls__button-label {
+  line-height: 1;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.icon--speaker-off {
+  display: none;
+}
+
+.is-muted .icon--speaker {
+  display: none;
+}
+
+.is-muted .icon--speaker-off {
+  display: inline-flex;
+}
+
 .game-controls__button:focus,
 .game-controls__button:hover {
   transform: translateY(-1px) scale(1.015);
