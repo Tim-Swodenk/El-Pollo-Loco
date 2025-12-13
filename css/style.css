@@ -436,6 +436,12 @@ ul {
   pointer-events: none;
 }
 
+.touch-controls__mute {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
 .touch-controls__cluster {
   display: flex;
   gap: clamp(12px, 4vw, 28px);

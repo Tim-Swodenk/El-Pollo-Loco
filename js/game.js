@@ -5,7 +5,7 @@ let hasGameStarted = false;
 let isGameOver = false;
 let touchControlButtons = [];
 let backgroundMusic;
-let muteButton;
+let muteButtons = [];
 let isMuted = false;
 let soundEffects = {};
 
@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", initGameUI);
 function initGameUI() {
   let buttons = getButtons();
   bindPrimaryButtons(buttons);
-  initializeAudio(buttons.mute);
+  initializeAudio(buttons.mute, buttons.touchMute);
   registerLayoutObservers();
   registerTouchControls();
   updateFullscreenButtonState();
@@ -47,6 +47,7 @@ function getButtons() {
     fullscreen: document.getElementById("fullscreen-button"),
     exit: document.getElementById("exit-button"),
     mute: document.getElementById("mute-button"),
+    touchMute: document.getElementById("touch-mute-button"),
   };
 }
 
@@ -61,14 +62,15 @@ function bindPrimaryButtons(buttons) {
   bindButton(buttons.fullscreen, toggleFullscreen);
   bindButton(buttons.exit, exitToHome);
   bindButton(buttons.mute, toggleMute);
+  bindButton(buttons.touchMute, toggleMute);
 }
 
-function initializeAudio(button) {
+function initializeAudio(...buttons) {
   backgroundMusic = new Audio(MUSIC_SRC);
   backgroundMusic.loop = true;
   backgroundMusic.volume = 0.35;
   soundEffects = createSoundEffects();
-  muteButton = button;
+  muteButtons = buttons.filter(Boolean);
   updateMuteButtonState();
 }
 
@@ -205,10 +207,12 @@ function playSoundEffect(name) {
 }
 
 function updateMuteButtonState() {
-  if (!muteButton) return;
-  muteButton.classList.toggle("is-muted", isMuted);
-  muteButton.setAttribute("aria-pressed", isMuted ? "true" : "false");
-  muteButton.setAttribute("aria-label", isMuted ? "Sound off" : "Sound on");
+  if (!muteButtons.length) return;
+  muteButtons.forEach((button) => {
+    button.classList.toggle("is-muted", isMuted);
+    button.setAttribute("aria-pressed", isMuted ? "true" : "false");
+    button.setAttribute("aria-label", isMuted ? "Sound off" : "Sound on");
+  });
 }
 
 /**
