@@ -437,6 +437,7 @@ ul {
 }
 
 .touch-controls__mute {
+  display: none;
   position: absolute;
   top: 16px;
   right: 16px;
@@ -532,6 +533,10 @@ canvas {
 
   .touch-controls {
     display: flex;
+  }
+
+  .touch-controls__mute {
+    display: block;
   }
 
   .start-screen {
