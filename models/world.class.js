@@ -1,3 +1,55 @@
+const STATUS_BAR_CONFIGS = {
+  health: {
+    images: [
+      "assets/img/7_statusbars/1_statusbar/2_statusbar_health/green/0.png",
+      "assets/img/7_statusbars/1_statusbar/2_statusbar_health/green/20.png",
+      "assets/img/7_statusbars/1_statusbar/2_statusbar_health/green/40.png",
+      "assets/img/7_statusbars/1_statusbar/2_statusbar_health/green/60.png",
+      "assets/img/7_statusbars/1_statusbar/2_statusbar_health/green/80.png",
+      "assets/img/7_statusbars/1_statusbar/2_statusbar_health/green/100.png",
+    ],
+    percentage: 100,
+    y: 0,
+  },
+  bottles: {
+    images: [
+      "assets/img/7_statusbars/1_statusbar/3_statusbar_bottle/green/0.png",
+      "assets/img/7_statusbars/1_statusbar/3_statusbar_bottle/green/20.png",
+      "assets/img/7_statusbars/1_statusbar/3_statusbar_bottle/green/40.png",
+      "assets/img/7_statusbars/1_statusbar/3_statusbar_bottle/green/60.png",
+      "assets/img/7_statusbars/1_statusbar/3_statusbar_bottle/green/80.png",
+      "assets/img/7_statusbars/1_statusbar/3_statusbar_bottle/green/100.png",
+    ],
+    percentage: 0,
+    y: 40,
+  },
+  coins: {
+    images: [
+      "assets/img/7_statusbars/1_statusbar/1_statusbar_coin/green/0.png",
+      "assets/img/7_statusbars/1_statusbar/1_statusbar_coin/green/20.png",
+      "assets/img/7_statusbars/1_statusbar/1_statusbar_coin/green/40.png",
+      "assets/img/7_statusbars/1_statusbar/1_statusbar_coin/green/60.png",
+      "assets/img/7_statusbars/1_statusbar/1_statusbar_coin/green/80.png",
+      "assets/img/7_statusbars/1_statusbar/1_statusbar_coin/green/100.png",
+    ],
+    percentage: 0,
+    y: 80,
+  },
+  endboss: {
+    images: [
+      "assets/img/7_statusbars/2_statusbar_endboss/green/green0.png",
+      "assets/img/7_statusbars/2_statusbar_endboss/green/green20.png",
+      "assets/img/7_statusbars/2_statusbar_endboss/green/green40.png",
+      "assets/img/7_statusbars/2_statusbar_endboss/green/green60.png",
+      "assets/img/7_statusbars/2_statusbar_endboss/green/green80.png",
+      "assets/img/7_statusbars/2_statusbar_endboss/green/green100.png",
+    ],
+    percentage: 100,
+    x: 490,
+    y: 0,
+  },
+};
+
 /**
  * Main game world tying together all objects and rendering.
  */
@@ -11,10 +63,10 @@ class World {
 
   nextCloudSpawnX = 0;
 
-  statusBarHealth = new StatusBarHealth();
-  statusBarBottles = new StatusBarBottles();
-  statusBarCoins = new StatusBarCoins();
-  statusBarEndboss = new StatusBarEndboss();
+  statusBarHealth = new StatusBar(STATUS_BAR_CONFIGS.health);
+  statusBarBottles = new StatusBar(STATUS_BAR_CONFIGS.bottles);
+  statusBarCoins = new StatusBar(STATUS_BAR_CONFIGS.coins);
+  statusBarEndboss = new StatusBar(STATUS_BAR_CONFIGS.endboss);
 
   throwableObjects = [];
 
