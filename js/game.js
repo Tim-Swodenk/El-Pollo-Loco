@@ -20,6 +20,8 @@ const SOUND_EFFECT_SOURCES = {
 const BASE_W = 720;
 const BASE_H = 480;
 
+const MUTE_STORAGE_KEY = "audioMuted";
+
 document.addEventListener("DOMContentLoaded", initGameUI);
 
 /**
@@ -28,6 +30,7 @@ document.addEventListener("DOMContentLoaded", initGameUI);
  */
 function initGameUI() {
   let buttons = getButtons();
+  loadMutePreference();
   bindPrimaryButtons(buttons);
   initializeAudio(buttons.mute, buttons.touchMute);
   registerLayoutObservers();
@@ -74,9 +77,10 @@ function initializeAudio(...buttons) {
   backgroundMusic = new Audio(MUSIC_SRC);
   backgroundMusic.loop = true;
   backgroundMusic.volume = 0.35;
+  backgroundMusic.muted = isMuted;
   soundEffects = createSoundEffects();
   muteButtons = buttons.filter(Boolean);
-  updateMuteButtonState();
+  applyMuteState();
 }
 
 /**
@@ -88,9 +92,28 @@ function createSoundEffects() {
   for (const [name, src] of Object.entries(SOUND_EFFECT_SOURCES)) {
     const audio = new Audio(src);
     audio.volume = 0.6;
+    audio.muted = isMuted;
     effects[name] = audio;
   }
   return effects;
+}
+
+function loadMutePreference() {
+  try {
+    const storedValue = localStorage.getItem(MUTE_STORAGE_KEY);
+    if (storedValue === null) return;
+    isMuted = storedValue === "true";
+  } catch (error) {
+    /* Access to localStorage might be blocked; fall back to default */
+  }
+}
+
+function persistMutePreference() {
+  try {
+    localStorage.setItem(MUTE_STORAGE_KEY, String(isMuted));
+  } catch (error) {
+    /* Ignore storage failures to avoid breaking audio toggling */
+  }
 }
 
 /**
@@ -218,6 +241,7 @@ function applyMuteState() {
   }
   Object.values(soundEffects).forEach((audio) => (audio.muted = isMuted));
   updateMuteButtonState();
+  persistMutePreference();
 }
 
 /**
