@@ -5,29 +5,18 @@
 class StatusBar extends DrawableObject {
   /**
    * Creates a new status bar.
-   * @param {Object} config - Configuration for the status bar.
-   * @param {string[]} config.images - Image paths for different percentage states.
-   * @param {number} [config.percentage=100] - Initial percentage value (0 to 100).
-   * @param {number} [config.x=10] - Horizontal position of the bar.
-   * @param {number} [config.y=0] - Vertical position of the bar.
-   * @param {number} [config.width=180] - Width of the bar.
-   * @param {number} [config.height=50] - Height of the bar.
+   * @param {string[]} images - Image paths for different percentage states.
+   * @param {number} percentage - Initial percentage value (0 to 100).
+   * @param {number} y - Vertical position of the bar.
    */
-  constructor({
-    images,
-    percentage = 100,
-    x = 10,
-    y = 0,
-    width = 180,
-    height = 50,
-  }) {
+  constructor(images, percentage, y) {
     super();
     this.IMAGES = images;
     this.loadImages(this.IMAGES);
-    this.x = x;
+    this.x = 10;
     this.y = y;
-    this.width = width;
-    this.height = height;
+    this.width = 180;
+    this.height = 50;
     this.setPercentage(percentage);
   }
 
