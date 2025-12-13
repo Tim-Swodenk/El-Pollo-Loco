@@ -65,6 +65,11 @@ function bindPrimaryButtons(buttons) {
   bindButton(buttons.touchMute, toggleMute);
 }
 
+/**
+ * Configures background music, sound effects and mute button references.
+ * @param {...(HTMLElement|null)} buttons - Mute button elements to sync state with.
+ * @returns {void}
+ */
 function initializeAudio(...buttons) {
   backgroundMusic = new Audio(MUSIC_SRC);
   backgroundMusic.loop = true;
@@ -74,6 +79,10 @@ function initializeAudio(...buttons) {
   updateMuteButtonState();
 }
 
+/**
+ * Builds the collection of sound effects used across the game.
+ * @returns {Object.<string, HTMLAudioElement>} Mapping of effect names to audio elements.
+ */
 function createSoundEffects() {
   let effects = {};
   for (const [name, src] of Object.entries(SOUND_EFFECT_SOURCES)) {
@@ -171,6 +180,10 @@ function togglePointerCapture(button, event, shouldCapture) {
   }
 }
 
+/**
+ * Starts the looping background music if it is not already playing.
+ * @returns {void}
+ */
 function startBackgroundMusic() {
   if (!backgroundMusic) return;
   backgroundMusic.muted = isMuted;
@@ -186,11 +199,19 @@ function stopBackgroundMusic() {
   backgroundMusic.currentTime = 0;
 }
 
+/**
+ * Toggles the global mute state for music and sound effects.
+ * @returns {void}
+ */
 function toggleMute() {
   isMuted = !isMuted;
   applyMuteState();
 }
 
+/**
+ * Applies the current mute state to all audio sources and updates the UI.
+ * @returns {void}
+ */
 function applyMuteState() {
   if (backgroundMusic) {
     backgroundMusic.muted = isMuted;
@@ -199,6 +220,11 @@ function applyMuteState() {
   updateMuteButtonState();
 }
 
+/**
+ * Plays the requested sound effect if it exists and audio is not muted.
+ * @param {string} name - Key of the sound effect to play.
+ * @returns {void}
+ */
 function playSoundEffect(name) {
   const effect = soundEffects[name];
   if (!effect || isMuted) return;
@@ -206,6 +232,10 @@ function playSoundEffect(name) {
   effect.play().catch(() => {});
 }
 
+/**
+ * Syncs the mute button visuals and ARIA state with the current mute flag.
+ * @returns {void}
+ */
 function updateMuteButtonState() {
   if (!muteButtons.length) return;
   muteButtons.forEach((button) => {
@@ -442,6 +472,10 @@ function resetWorldState() {
   stopBackgroundMusic();
 }
 
+/**
+ * Resets world objects and inputs to their default state before a restart.
+ * @returns {void}
+ */
 function resetWorldForRestart() {
   destroyWorld();
   recreateLevel();
