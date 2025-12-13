@@ -399,6 +399,7 @@ class World {
       ) {
         obj.collect();
         this.collectedBottles++;
+        playSoundEffect("itemPickup");
         const perc = (this.collectedBottles / this.maxBottles) * 100;
         this.statusBarBottles.setPercentage(perc);
       }
@@ -424,6 +425,7 @@ class World {
   collectCoin(obj) {
     obj.collect();
     this.collectedCoins++;
+    playSoundEffect("itemPickup");
     this.updateCoinStatusBar();
     if (this.collectedCoins !== this.maxCoins) return;
     this.handleFullCoinStack();

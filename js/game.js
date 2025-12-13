@@ -7,8 +7,14 @@ let touchControlButtons = [];
 let backgroundMusic;
 let muteButton;
 let isMuted = false;
+let soundEffects = {};
 
 const MUSIC_SRC = "audio/background-music.wav";
+const SOUND_EFFECT_SOURCES = {
+  jump: "audio/jump.wav",
+  hurt: "audio/hurt.mp3",
+  itemPickup: "audio/item-pickup.mp3",
+};
 
 // Logical base size of the game world
 const BASE_W = 720;
@@ -61,8 +67,19 @@ function initializeAudio(button) {
   backgroundMusic = new Audio(MUSIC_SRC);
   backgroundMusic.loop = true;
   backgroundMusic.volume = 0.35;
+  soundEffects = createSoundEffects();
   muteButton = button;
   updateMuteButtonState();
+}
+
+function createSoundEffects() {
+  let effects = {};
+  for (const [name, src] of Object.entries(SOUND_EFFECT_SOURCES)) {
+    const audio = new Audio(src);
+    audio.volume = 0.6;
+    effects[name] = audio;
+  }
+  return effects;
 }
 
 /**
@@ -176,7 +193,15 @@ function applyMuteState() {
   if (backgroundMusic) {
     backgroundMusic.muted = isMuted;
   }
+  Object.values(soundEffects).forEach((audio) => (audio.muted = isMuted));
   updateMuteButtonState();
+}
+
+function playSoundEffect(name) {
+  const effect = soundEffects[name];
+  if (!effect || isMuted) return;
+  effect.currentTime = 0;
+  effect.play().catch(() => {});
 }
 
 function updateMuteButtonState() {
@@ -277,6 +302,9 @@ function showGameContainer(gameContainer) {
  */
 function handleGameOver(reason = "loss") {
   isGameOver = true;
+  if (reason === "loss") {
+    stopBackgroundMusic();
+  }
   resetTouchControls();
   let elements = getGameOverElements();
   if (!elements.screen) return;

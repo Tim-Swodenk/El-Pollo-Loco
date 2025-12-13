@@ -182,6 +182,7 @@ class Character extends MovableObject {
   handleJumpInput() {
     if (this.world.keyboard.SPACE && !this.isAboveGround()) {
       this.jump();
+      playSoundEffect("jump");
       this.setActive();
     }
   }
@@ -285,5 +286,15 @@ class Character extends MovableObject {
    */
   isAboveGround() {
     return this.y < Character.GROUND_LEVEL;
+  }
+
+  /**
+   * Reduces energy and plays a hurt sound when damaged.
+   * @param {number} [damage=20] - Amount of damage to apply.
+   * @returns {void}
+   */
+  hit(damage = 20) {
+    super.hit(damage);
+    playSoundEffect("hurt");
   }
 }
