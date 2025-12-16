@@ -12,6 +12,8 @@ const state = {
   hasGameStarted: false,
   isGameOver: false,
   keyboardFactory: () => new Keyboard(),
+  levelFactory: () => WorldLifecycle.recreateLevelIfPossible(),
+  level: null,
   keyboard: null,
   world: null,
   canvas: null,
@@ -163,6 +165,7 @@ function initWorld() {
   state.world = WorldLifecycle.createWorld({
     canvas,
     keyboard: state.keyboard,
+    level: state.level,
     onGameOver: handleGameOver,
   });
 
@@ -198,6 +201,7 @@ function startGame() {
   let ui = DomRefs.getGameScreens();
   Screens.hideStartScreen(ui.startScreen, ui.startButton);
   Screens.showGameContainer(ui.gameContainer);
+  state.level = state.levelFactory();
   initWorld();
   audioManager.startMusic();
   state.hasGameStarted = true;
@@ -231,12 +235,14 @@ function restartGame() {
   let elements = DomRefs.getGameOverElements();
   elements.restartButton?.blur();
 
-  state.keyboard = WorldLifecycle.resetWorldForRestart({
+  const { keyboard, level } = WorldLifecycle.resetWorldForRestart({
     destroyWorld: () => WorldLifecycle.destroyWorld(state.world),
     recreateLevel: WorldLifecycle.recreateLevelIfPossible,
     keyboardFactory: state.keyboardFactory,
     onTouchReset: touchControls.reset,
   });
+  state.keyboard = keyboard;
+  state.level = level;
   state.world = null;
 
   Screens.hideGameOverScreen(elements.screen);
@@ -260,7 +266,7 @@ function exitToHome() {
   }
   audioManager.stopMusic();
   WorldLifecycle.destroyWorld(state.world);
-  WorldLifecycle.recreateLevelIfPossible();
+  state.level = state.levelFactory();
   touchControls.reset();
   Screens.resetUiState(ui);
 

@@ -12,7 +12,7 @@
    */
   function fitCanvasToScreen({ canvas, baseW, baseH, isFullscreenActive }) {
     if (!canvas) return;
-    const dpr = window.devicePixelRatio || 1;
+    let dpr = window.devicePixelRatio || 1;
     if (isFullscreenActive()) {
       fitCanvasFullscreen(canvas, baseW, baseH, dpr);
     } else {
@@ -29,7 +29,7 @@
    */
   function updateFullscreenButtonState({ button, isFullscreenActive }) {
     if (!button) return;
-    const active = isFullscreenActive();
+    let active = isFullscreenActive();
     button.textContent = active ? "Exit fullscreen" : "Fullscreen";
     button.setAttribute("aria-pressed", active ? "true" : "false");
     document.body.classList.toggle("is-fullscreen", active);
@@ -87,16 +87,16 @@
   }
 
   function fitCanvasFullscreen(el, baseW, baseH, dpr) {
-    const size = getFullscreenCanvasSize(baseW, baseH);
+    let size = getFullscreenCanvasSize(baseW, baseH);
     setCanvasStyle(el, size.targetW, size.targetH);
-    const render = getRenderSize(size, dpr);
+    let render = getRenderSize(size, dpr);
     updateCanvasResolution(el, render.width, render.height);
     applyCanvasScale(el, size.targetW / baseW, dpr);
   }
 
   function fitCanvasWindowed(el, baseW, baseH, dpr) {
     clearCanvasStyle(el);
-    const render = getRenderSize({ targetW: baseW, targetH: baseH }, dpr);
+    let render = getRenderSize({ targetW: baseW, targetH: baseH }, dpr);
     updateCanvasResolution(el, render.width, render.height);
     applyCanvasScale(el, 1, dpr);
   }
@@ -130,7 +130,7 @@
   }
 
   function applyCanvasScale(el, scale, dpr) {
-    const ctx = el.getContext("2d");
+    let ctx = el.getContext("2d");
     ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
   }
 

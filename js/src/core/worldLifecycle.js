@@ -9,9 +9,9 @@
    * @param {Function} options.onGameOver - Callback for game over events.
    * @returns {World|null}
    */
-  function createWorld({ canvas, keyboard, onGameOver }) {
+  function createWorld({ canvas, keyboard, level, onGameOver }) {
     if (!canvas) return null;
-    const world = new World(canvas, keyboard);
+    const world = new World(canvas, keyboard, level ?? global.level1);
     if (typeof world.setOnGameOver === "function") {
       world.setOnGameOver(onGameOver);
     }
@@ -46,9 +46,9 @@
     onTouchReset,
   }) {
     destroyWorld();
-    recreateLevel();
+    const level = recreateLevel();
     onTouchReset?.();
-    return keyboardFactory();
+    return { keyboard: keyboardFactory(), level };
   }
 
   /**
@@ -56,8 +56,13 @@
    * @returns {void}
    */
   function recreateLevelIfPossible() {
-    if (typeof global.createLevel1 !== "function") return;
-    global.level1 = global.createLevel1();
+    if (typeof global.createLevel1 !== "function") return null;
+    const level = global.createLevel1();
+    global.level1 = level;
+    if (typeof level1 !== "undefined") {
+      level1 = level;
+    }
+    return level;
   }
 
   global.WorldLifecycle = {

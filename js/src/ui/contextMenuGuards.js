@@ -9,7 +9,7 @@
    * @returns {void}
    */
   function blockContextMenu({ elements, onBlocked }) {
-    const targets = (elements || []).filter(Boolean);
+    let targets = (elements || []).filter(Boolean);
     targets.forEach((element) => {
       element.addEventListener("contextmenu", (event) => {
         event.preventDefault();

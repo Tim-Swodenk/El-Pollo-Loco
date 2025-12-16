@@ -55,7 +55,7 @@ const STATUS_BAR_CONFIGS = {
  */
 class World {
   character = new Character();
-  level = level1;
+  level;
   canvas;
   ctx;
   keyboard;
@@ -81,7 +81,7 @@ class World {
   collectedCoins = 0;
   maxCoins = 5;
 
-  endboss = this.level.enemies.find((enemy) => enemy instanceof Endboss);
+  endboss = null;
 
   gameLoopIntervalId = null;
   chickenSpawnerId = null;
@@ -98,10 +98,14 @@ class World {
    * @param {HTMLCanvasElement} canvas - Canvas to render on.
    * @param {Keyboard} keyboard - Input keyboard instance.
    */
-  constructor(canvas, keyboard) {
+  constructor(canvas, keyboard, level = level1) {
     this.ctx = canvas.getContext("2d");
     this.canvas = canvas;
     this.keyboard = keyboard;
+
+    this.level = this.cloneLevel(level);
+    this.endboss =
+      this.level?.enemies?.find((enemy) => enemy instanceof Endboss) ?? null;
 
     this.interactions = new WorldInteractions(this);
     this.renderer = new WorldRenderer(this.ctx, this);
@@ -124,7 +128,7 @@ class World {
         this.spawnChicken();
         this.lastCameraX = this.camera_x;
       }
-    }, 3000);
+    }, 1500);
   }
 
   /**
@@ -358,5 +362,16 @@ class World {
     }
     this.character.speed = 0;
     this.character.speedY = 0;
+  }
+
+  cloneLevel(level) {
+    if (!level) return level;
+    return new Level(
+      [...(level.enemies ?? [])],
+      [...(level.clouds ?? [])],
+      [...(level.backgroundObjects ?? [])],
+      [...(level.collectableObjects ?? [])],
+      [...(level.coinObjects ?? [])]
+    );
   }
 }
