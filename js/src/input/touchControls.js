@@ -9,25 +9,26 @@
    * @returns {{reset: function(): void, unbind: function(): void}}
    */
   function bindTouchControls({ keyboard, containerSelector }) {
-    const getKeyboard = typeof keyboard === "function" ? keyboard : () => keyboard;
-    const container = document.querySelector(containerSelector);
+    let getKeyboard =
+      typeof keyboard === "function" ? keyboard : () => keyboard;
+    let container = document.querySelector(containerSelector);
     if (!container) {
       return { reset: () => {}, unbind: () => {} };
     }
 
-    const touchButtons = Array.from(container.querySelectorAll("[data-key]"));
-    const handlers = new Map();
+    let touchButtons = Array.from(container.querySelectorAll("[data-key]"));
+    let handlers = new Map();
 
     touchButtons.forEach((button) => {
-      const key = button.dataset.key;
+      let key = button.dataset.key;
       if (!key) return;
 
-      const handlePress = (event) => {
+      let handlePress = (event) => {
         event.preventDefault();
         setTouchButtonState(button, key, true);
         togglePointerCapture(button, event, true);
       };
-      const handleRelease = (event) => {
+      let handleRelease = (event) => {
         event.preventDefault();
         setTouchButtonState(button, key, false);
         togglePointerCapture(button, event, false);
@@ -62,7 +63,9 @@
      * @returns {void}
      */
     function togglePointerCapture(button, event, shouldCapture) {
-      const method = shouldCapture ? "setPointerCapture" : "releasePointerCapture";
+      let method = shouldCapture
+        ? "setPointerCapture"
+        : "releasePointerCapture";
       if (typeof button[method] !== "function") return;
       try {
         button[method](event.pointerId);
@@ -77,7 +80,7 @@
      */
     function reset() {
       touchButtons.forEach((button) => {
-        const key = button.dataset.key;
+        let key = button.dataset.key;
         setTouchButtonState(button, key, false);
       });
     }
@@ -88,7 +91,7 @@
      */
     function unbind() {
       touchButtons.forEach((button) => {
-        const mapping = handlers.get(button);
+        let mapping = handlers.get(button);
         if (!mapping) return;
         button.removeEventListener("pointerdown", mapping.handlePress);
         button.removeEventListener("pointerup", mapping.handleRelease);

@@ -22,15 +22,16 @@
    * @returns {{unbind: function(): void}}
    */
   function bindKeyboardControls({ keyboard, getState, actions }) {
-    const getKeyboard = typeof keyboard === "function" ? keyboard : () => keyboard;
+    let getKeyboard =
+      typeof keyboard === "function" ? keyboard : () => keyboard;
 
-    const onKeyDown = (e) => {
+    let onKeyDown = (e) => {
       if (handleGameOverKeys(e)) return;
       if (handleStartStopKeys(e)) return;
       updateMovementState(e, true);
     };
 
-    const onKeyUp = (e) => {
+    let onKeyUp = (e) => {
       updateMovementState(e, false);
     };
 

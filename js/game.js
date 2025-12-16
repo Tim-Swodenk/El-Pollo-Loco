@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", initGameUI);
  */
 function initGameUI() {
   state.keyboard = state.keyboardFactory();
-  const buttons = DomRefs.getButtons();
+  let buttons = DomRefs.getButtons();
 
   bindPrimaryButtons(buttons);
   audioManager = AudioManager.createAudioManager({
@@ -105,7 +105,7 @@ function bindButton(button, handler) {
  * @returns {HTMLElement[]}
  */
 function getContextMenuElements(buttons) {
-  const touchButtons = Array.from(
+  let touchButtons = Array.from(
     document.querySelectorAll(".touch-controls__button")
   );
   return [
@@ -127,7 +127,7 @@ function getContextMenuElements(buttons) {
  * @returns {void}
  */
 function registerLayoutObservers(fullscreenButton) {
-  const onLayoutChange = () => {
+  let onLayoutChange = () => {
     CanvasFit.updateFullscreenButtonState({
       button: fullscreenButton,
       isFullscreenActive: CanvasFit.isFullscreenActive,
@@ -157,7 +157,7 @@ function registerLayoutObservers(fullscreenButton) {
  * @returns {void}
  */
 function initWorld() {
-  const canvas = ensureCanvas();
+  let canvas = ensureCanvas();
   if (!canvas) return;
 
   state.world = WorldLifecycle.createWorld({
@@ -195,7 +195,7 @@ function ensureCanvas() {
  */
 function startGame() {
   if (state.hasGameStarted) return;
-  const ui = DomRefs.getGameScreens();
+  let ui = DomRefs.getGameScreens();
   Screens.hideStartScreen(ui.startScreen, ui.startButton);
   Screens.showGameContainer(ui.gameContainer);
   initWorld();
@@ -215,7 +215,7 @@ function handleGameOver(reason = "loss") {
     audioManager.stopMusic();
   }
   touchControls.reset();
-  const elements = DomRefs.getGameOverElements();
+  let elements = DomRefs.getGameOverElements();
   if (!elements.screen) return;
   Screens.updateGameOverContent(elements, reason);
   Screens.revealGameOverScreen(elements);
@@ -228,7 +228,7 @@ function handleGameOver(reason = "loss") {
 function restartGame() {
   if (!state.hasGameStarted) return;
 
-  const elements = DomRefs.getGameOverElements();
+  let elements = DomRefs.getGameOverElements();
   elements.restartButton?.blur();
 
   state.keyboard = WorldLifecycle.resetWorldForRestart({
@@ -253,7 +253,7 @@ function restartGame() {
  * @returns {void}
  */
 function exitToHome() {
-  const ui = DomRefs.getExitElements();
+  let ui = DomRefs.getExitElements();
   ui.exitButton?.blur();
   if (CanvasFit.isFullscreenActive()) {
     CanvasFit.exitFullscreen();

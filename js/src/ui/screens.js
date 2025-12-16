@@ -1,7 +1,7 @@
 (function (global) {
   "use strict";
 
-  const GAME_OVER_CONTENT = {
+  let GAME_OVER_CONTENT = {
     win: {
       src: "./assets/img/You won, you lost/You Won B.png",
       alt: "You Win",
@@ -64,7 +64,7 @@
    */
   function updateGameOverContent(elements, reason) {
     if (!elements.titleImage || !elements.message) return;
-    const content = getGameOverContent(reason);
+    let content = getGameOverContent(reason);
     elements.titleImage.src = content.src;
     elements.titleImage.alt = content.alt;
     elements.message.textContent = content.text;

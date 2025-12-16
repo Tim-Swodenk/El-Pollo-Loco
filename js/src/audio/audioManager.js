@@ -37,9 +37,9 @@
      * @returns {Object.<string, HTMLAudioElement>}
      */
     function createSoundEffects() {
-      const effects = {};
+      let effects = {};
       Object.entries(sfxSources).forEach(([name, src]) => {
-        const audio = new Audio(src);
+        let audio = new Audio(src);
         audio.volume = 0.6;
         audio.muted = isMuted;
         effects[name] = audio;
@@ -53,7 +53,7 @@
      */
     function loadMutePreference() {
       try {
-        const storedValue = localStorage.getItem(storageKey);
+        let storedValue = localStorage.getItem(storageKey);
         if (storedValue === null) return;
         isMuted = storedValue === "true";
       } catch (error) {
@@ -129,7 +129,7 @@
      * @returns {void}
      */
     function playSfx(name) {
-      const effect = soundEffects[name];
+      let effect = soundEffects[name];
       if (!effect || isMuted) return;
       effect.currentTime = 0;
       effect.play().catch(() => {});
