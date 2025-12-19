@@ -376,16 +376,25 @@ ul {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #2c1b47;
-  background: linear-gradient(135deg, #ffe066, #f67528 55%, #ff4d5a);
+  color: #26143d;
+  background: linear-gradient(135deg, #ffe98a, #ff9c42 50%, #ff6b6b);
   cursor: pointer;
   transition: transform 150ms ease, box-shadow 150ms ease;
-  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.35);
+  box-shadow:
+    0 20px 35px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.35),
+    0 10px 22px rgba(255, 105, 97, 0.25);
+  filter: saturate(1.08);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
-.game-over__button:focus {
+.game-over__button:focus-visible {
+  outline: 3px solid #fff3c4;
+  outline-offset: 4px;
   transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 24px 45px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 24px 45px rgba(0, 0, 0, 0.4),
+    0 0 0 5px rgba(255, 224, 102, 0.4);
 }
 
 .game-over__hint {

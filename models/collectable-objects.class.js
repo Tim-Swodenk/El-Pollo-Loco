@@ -71,7 +71,7 @@ class CollectableBottle extends Collectable {
     super("collectableObjects");
     this.loadImage(this.IMAGES[0]);
     this.width = 100;
-    this.height = 120;
+    this.height = 100;
     this.offset = { top: 25, right: 25, bottom: 15, left: 25 };
     this.loadImages(this.IMAGES);
     this.animate(500);
