@@ -83,7 +83,6 @@ ul {
   box-shadow: 0 16px 30px rgba(0, 0, 0, 0.3);
 }
 
-.legal-page__back-link:hover,
 .legal-page__back-link:focus {
   transform: translateY(-1px) scale(1.015);
   box-shadow: 0 20px 36px rgba(0, 0, 0, 0.35);
@@ -179,8 +178,7 @@ ul {
   box-shadow: 0 20px 35px rgba(0, 0, 0, 0.35);
 }
 
-.start-screen__button:focus,
-.start-screen__button:hover {
+.start-screen__button:focus {
   transform: translateY(-2px) scale(1.02);
   box-shadow: 0 24px 45px rgba(0, 0, 0, 0.4);
 }
@@ -260,8 +258,7 @@ ul {
   display: inline-flex;
 }
 
-.game-controls__button:focus,
-.game-controls__button:hover {
+.game-controls__button:focus {
   transform: translateY(-1px) scale(1.015);
   box-shadow: 0 20px 36px rgba(0, 0, 0, 0.35);
 }
@@ -284,7 +281,6 @@ ul {
   transition: color 150ms ease;
 }
 
-.site-footer__link:hover,
 .site-footer__link:focus {
   color: #ffe066;
 }
@@ -387,8 +383,7 @@ ul {
   box-shadow: 0 20px 35px rgba(0, 0, 0, 0.35);
 }
 
-.game-over__button:focus,
-.game-over__button:hover {
+.game-over__button:focus {
   transform: translateY(-2px) scale(1.02);
   box-shadow: 0 24px 45px rgba(0, 0, 0, 0.4);
 }
@@ -397,6 +392,46 @@ ul {
   margin: 0;
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.75);
+}
+
+@media (hover: hover) {
+  .legal-page__back-link:hover {
+    transform: translateY(-1px) scale(1.015);
+    box-shadow: 0 20px 36px rgba(0, 0, 0, 0.35);
+  }
+
+  .start-screen__button:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 24px 45px rgba(0, 0, 0, 0.4);
+  }
+
+  .game-controls__button:hover {
+    transform: translateY(-1px) scale(1.015);
+    box-shadow: 0 20px 36px rgba(0, 0, 0, 0.35);
+  }
+
+  .site-footer__link:hover {
+    color: #ffe066;
+  }
+
+  .game-over__button:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 24px 45px rgba(0, 0, 0, 0.4);
+  }
+}
+
+@media (hover: none) {
+  .start-screen__button:active,
+  .game-controls__button:active,
+  .game-over__button:active {
+    transform: translateY(-1px) scale(0.99);
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  .legal-page__back-link:active {
+    transform: translateY(-1px) scale(0.995);
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
+  }
 }
 
 .control-hints {
