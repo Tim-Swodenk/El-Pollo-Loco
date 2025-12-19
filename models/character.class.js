@@ -82,6 +82,8 @@ class Character extends MovableObject {
   currentAnimation = null;
   lastFrameChangeAt = 0;
   lastActiveAt = Date.now();
+  movementInterval = null;
+  animationInterval = null;
 
   static SLEEP_DELAY_MS = 15000;
   static IDLE_FRAME_DURATION_MS = 140;
@@ -149,7 +151,8 @@ class Character extends MovableObject {
    * @returns {void}
    */
   startMovementLoop() {
-    setInterval(() => {
+    this.stopMovementLoop();
+    this.movementInterval = setInterval(() => {
       this.handleHorizontalMovement();
       this.handleJumpInput();
       this.handleActivityKeys();
@@ -202,9 +205,40 @@ class Character extends MovableObject {
    * @returns {void}
    */
   startAnimationLoop() {
-    setInterval(() => {
+    this.stopAnimationLoop();
+    this.animationInterval = setInterval(() => {
       this.updateAnimationState();
     }, 60);
+  }
+
+  /**
+   * Stops movement loop interval.
+   * @returns {void}
+   */
+  stopMovementLoop() {
+    if (!this.movementInterval) return;
+    clearInterval(this.movementInterval);
+    this.movementInterval = null;
+  }
+
+  /**
+   * Stops animation loop interval.
+   * @returns {void}
+   */
+  stopAnimationLoop() {
+    if (!this.animationInterval) return;
+    clearInterval(this.animationInterval);
+    this.animationInterval = null;
+  }
+
+  /**
+   * Stops all running timers on the character.
+   * @returns {void}
+   */
+  stopAllTimers() {
+    this.stopMovementLoop();
+    this.stopAnimationLoop();
+    this.stopGravity();
   }
 
   /**

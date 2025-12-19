@@ -346,8 +346,61 @@ class World {
     this.stopGameLoop();
     this.stopChickenSpawner();
     this.stopCloudSpawner();
+    this.stopRenderer();
+    this.stopAllEntityTimers();
     this.disablePlayerControl();
     this.gameOverTriggered = true;
+  }
+
+  /**
+   * Stops the renderer requestAnimationFrame loop.
+   * @returns {void}
+   */
+  stopRenderer() {
+    if (this.renderer && typeof this.renderer.stop === "function") {
+      this.renderer.stop();
+    }
+  }
+
+  /**
+   * Stops timers and behaviors on all known entities.
+   * @returns {void}
+   */
+  stopAllEntityTimers() {
+    this.stopObjectTimers(this.character);
+    this.stopObjectTimers(this.endboss);
+    this.stopObjectTimers(this.endboss?.behavior);
+    this.stopObjectTimers(this.endboss?.animations);
+
+    this.stopTimersForCollection(this.level?.enemies);
+    this.stopTimersForCollection(this.level?.clouds);
+    this.stopTimersForCollection(this.level?.collectableObjects);
+    this.stopTimersForCollection(this.level?.coinObjects);
+    this.stopTimersForCollection(this.throwableObjects);
+  }
+
+  /**
+   * Stops timers for each object in a collection.
+   * @param {Array<*>|undefined|null} collection - Objects to stop.
+   * @returns {void}
+   */
+  stopTimersForCollection(collection) {
+    if (!Array.isArray(collection)) return;
+    collection.forEach((obj) => this.stopObjectTimers(obj));
+  }
+
+  /**
+   * Tries various cleanup hooks on an object.
+   * @param {*} obj - Target object.
+   * @returns {void}
+   */
+  stopObjectTimers(obj) {
+    if (!obj) return;
+    if (typeof obj.stopAllTimers === "function") obj.stopAllTimers();
+    if (typeof obj.stopBehavior === "function") obj.stopBehavior();
+    if (typeof obj.stopAnimation === "function") obj.stopAnimation();
+    if (typeof obj.stopAll === "function") obj.stopAll();
+    if (typeof obj.stop === "function") obj.stop();
   }
 
   /**

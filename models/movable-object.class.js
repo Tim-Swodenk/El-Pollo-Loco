@@ -15,7 +15,8 @@ class MovableObject extends DrawableObject {
    * @returns {void}
    */
   applyGravity() {
-    setInterval(() => {
+    this.stopGravity();
+    this.gravityInterval = setInterval(() => {
       if (this.isAboveGround() || this.speedY > 0) {
         this.y -= this.speedY;
         this.speedY -= this.acceleration;
@@ -23,6 +24,16 @@ class MovableObject extends DrawableObject {
         this.speedY = 0;
       }
     }, 1000 / 30);
+  }
+
+  /**
+   * Stops the gravity interval if running.
+   * @returns {void}
+   */
+  stopGravity() {
+    if (!this.gravityInterval) return;
+    clearInterval(this.gravityInterval);
+    this.gravityInterval = null;
   }
 
   /**

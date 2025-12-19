@@ -35,8 +35,28 @@ class Cloud extends MovableObject {
    * @returns {void}
    */
   animate() {
-    setInterval(() => {
+    this.stopAnimation();
+    this.moveInterval = setInterval(() => {
       this.moveLeft();
     }, 1000 / 25);
+  }
+
+  /**
+   * Stops the cloud animation interval.
+   * @returns {void}
+   */
+  stopAnimation() {
+    if (!this.moveInterval) return;
+    clearInterval(this.moveInterval);
+    this.moveInterval = null;
+  }
+
+  /**
+   * Stops all timers for the cloud.
+   * @returns {void}
+   */
+  stopAllTimers() {
+    this.stopAnimation();
+    this.stopGravity();
   }
 }

@@ -45,6 +45,15 @@ class Collectable extends MovableObject {
     this.animationInterval = null;
   }
 
+  /**
+   * Stops all timers related to the collectable.
+   * @returns {void}
+   */
+  stopAllTimers() {
+    this.stopAnimation();
+    this.stopGravity();
+  }
+
   removeFromLevelArray(collection) {
     if (!Array.isArray(collection)) return;
     const index = collection.indexOf(this);

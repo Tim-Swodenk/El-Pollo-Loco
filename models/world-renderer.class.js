@@ -9,6 +9,8 @@ class WorldRenderer {
   constructor(ctx, world) {
     this.ctx = ctx;
     this.world = world;
+    this.frameId = null;
+    this.isRunning = false;
     this.drawFrame = this.drawFrame.bind(this);
   }
 
@@ -17,7 +19,20 @@ class WorldRenderer {
    * @returns {void}
    */
   start() {
-    requestAnimationFrame(this.drawFrame);
+    this.isRunning = true;
+    this.frameId = requestAnimationFrame(this.drawFrame);
+  }
+
+  /**
+   * Stops the rendering loop and cancels the pending animation frame.
+   * @returns {void}
+   */
+  stop() {
+    this.isRunning = false;
+    if (this.frameId) {
+      cancelAnimationFrame(this.frameId);
+      this.frameId = null;
+    }
   }
 
   /**
@@ -25,12 +40,13 @@ class WorldRenderer {
    * @returns {void}
    */
   drawFrame() {
+    if (!this.isRunning) return;
     this.clearCanvas();
     this.drawBackground();
     this.drawHud();
     this.drawForeground();
     this.resetCamera();
-    requestAnimationFrame(this.drawFrame);
+    this.frameId = requestAnimationFrame(this.drawFrame);
   }
 
   /**

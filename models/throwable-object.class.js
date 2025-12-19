@@ -130,9 +130,22 @@ class ThrowableObject extends MovableObject {
           this.world.throwableObjects.splice(index, 1);
         }
       }
-      clearInterval(this.animationInterval);
-      clearInterval(this.throwInterval);
-      clearInterval(this.gravityInterval);
+      this.stopAllTimers();
     }, 500);
+  }
+
+  /**
+   * Stops all running timers for the bottle.
+   * @returns {void}
+   */
+  stopAllTimers() {
+    if (this.animationInterval) clearInterval(this.animationInterval);
+    if (this.throwInterval) clearInterval(this.throwInterval);
+    if (this.gravityInterval) clearInterval(this.gravityInterval);
+    if (this.splashInterval) clearInterval(this.splashInterval);
+    this.animationInterval = null;
+    this.throwInterval = null;
+    this.gravityInterval = null;
+    this.splashInterval = null;
   }
 }
