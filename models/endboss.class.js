@@ -4,110 +4,50 @@
  */
 class Endboss extends MovableObject {
   //base stats & size
-  height = 400;
-  width = 250;
-  y = 40;
-  energy = 100;
-  speed = 18;
+  height = END_BOSS_BASE_STATS.height;
+  width = END_BOSS_BASE_STATS.width;
+  y = END_BOSS_BASE_STATS.y;
+  energy = END_BOSS_BASE_STATS.energy;
+  speed = END_BOSS_BASE_STATS.speed;
+  spawnX = END_BOSS_BASE_STATS.spawnX;
 
   //animation + behavior
-  animationMs = 180;
-  animationIntervalId = null;
-  behaviorInterval = null;
-  visibilityCheckId = null;
+  animationMs = END_BOSS_BASE_STATS.animationMs;
   enraged = false;
 
   //state flags
   currentState = "wait";
-  isPlayingSequence = false;
   isJumpAttackActive = false;
   activated = false;
   hurtOverlayUntil = 0;
 
   //movement control
   _moveId = 0;
-  walkForwardDistance = 400;
-  walkBackwardDistance = 400;
-  attackDistance = 40;
-  jumpAttackDistance = 400;
+  walkForwardDistance = END_BOSS_BASE_STATS.walkForwardDistance;
+  walkBackwardDistance = END_BOSS_BASE_STATS.walkBackwardDistance;
+  attackDistance = END_BOSS_BASE_STATS.attackDistance;
+  jumpAttackDistance = END_BOSS_BASE_STATS.jumpAttackDistance;
 
-  SEQUENCES = [
-    ["alert", "jumpAttack", "walkBackward"],
-    ["walkForward", "alert", "walkBackward"],
-    ["alert", "walkForward", "walkBackward"],
-    ["walkForward", "alert", "attack", "walkBackward"],
-    [
-      "jumpAttack",
-      "attack",
-      "walkForward",
-      "walkBackward",
-      "attack",
-      "walkBackward",
-    ],
-  ];
+  SEQUENCES = END_BOSS_SEQUENCES;
 
-  ACTION_DELAYS = {
-    walkForward: 1000,
-    walkBackward: 1000,
-    alert: 300,
-    attack: 600,
-    jumpAttack: 800,
-    wait: 800,
-  };
+  ACTION_DELAYS = { ...END_BOSS_ACTION_DELAYS };
 
-  IMAGES_WAIT = [
-    "assets/img/4_enemie_boss_chicken/2_alert/G5.png",
-    "assets/img/4_enemie_boss_chicken/2_alert/G6.png",
-    "assets/img/4_enemie_boss_chicken/2_alert/G7.png",
-  ];
-  IMAGES_WALK = [
-    "assets/img/4_enemie_boss_chicken/1_walk/G1.png",
-    "assets/img/4_enemie_boss_chicken/1_walk/G2.png",
-    "assets/img/4_enemie_boss_chicken/1_walk/G3.png",
-    "assets/img/4_enemie_boss_chicken/1_walk/G4.png",
-  ];
-  IMAGES_ALERT = [
-    "assets/img/4_enemie_boss_chicken/2_alert/G5.png",
-    "assets/img/4_enemie_boss_chicken/2_alert/G6.png",
-    "assets/img/4_enemie_boss_chicken/2_alert/G7.png",
-    "assets/img/4_enemie_boss_chicken/2_alert/G8.png",
-    "assets/img/4_enemie_boss_chicken/2_alert/G9.png",
-    "assets/img/4_enemie_boss_chicken/2_alert/G10.png",
-    "assets/img/4_enemie_boss_chicken/2_alert/G11.png",
-    "assets/img/4_enemie_boss_chicken/2_alert/G12.png",
-  ];
-  IMAGES_ATTACK = [
-    "assets/img/4_enemie_boss_chicken/3_attack/G13.png",
-    "assets/img/4_enemie_boss_chicken/3_attack/G14.png",
-    "assets/img/4_enemie_boss_chicken/3_attack/G15.png",
-    "assets/img/4_enemie_boss_chicken/3_attack/G16.png",
-    "assets/img/4_enemie_boss_chicken/3_attack/G17.png",
-    "assets/img/4_enemie_boss_chicken/3_attack/G18.png",
-    "assets/img/4_enemie_boss_chicken/3_attack/G19.png",
-    "assets/img/4_enemie_boss_chicken/3_attack/G20.png",
-  ];
-  IMAGES_JUMPATTACK = [
-    "assets/img/4_enemie_boss_chicken/3_attack/G17.png",
-    "assets/img/4_enemie_boss_chicken/3_attack/G18.png",
-    "assets/img/4_enemie_boss_chicken/3_attack/G19.png",
-  ];
-  IMAGES_HURT = [
-    "assets/img/4_enemie_boss_chicken/4_hurt/G21.png",
-    "assets/img/4_enemie_boss_chicken/4_hurt/G22.png",
-    "assets/img/4_enemie_boss_chicken/4_hurt/G23.png",
-  ];
-  IMAGES_DEAD = [
-    "assets/img/4_enemie_boss_chicken/5_dead/G24.png",
-    "assets/img/4_enemie_boss_chicken/5_dead/G25.png",
-    "assets/img/4_enemie_boss_chicken/5_dead/G26.png",
-  ];
+  IMAGES_WAIT = END_BOSS_IMAGES.WAIT;
+  IMAGES_WALK = END_BOSS_IMAGES.WALK;
+  IMAGES_ALERT = END_BOSS_IMAGES.ALERT;
+  IMAGES_ATTACK = END_BOSS_IMAGES.ATTACK;
+  IMAGES_JUMPATTACK = END_BOSS_IMAGES.JUMPATTACK;
+  IMAGES_HURT = END_BOSS_IMAGES.HURT;
+  IMAGES_DEAD = END_BOSS_IMAGES.DEAD;
 
   constructor() {
     super();
+    this.animations = new EndbossAnimations(this);
+    this.behavior = new EndbossBehavior(this);
     this.loadAllImages();
     this.configureStartState();
     this.applyGravity();
-    this.activateWhenVisible(40);
+    this.behavior.activateWhenVisible(40);
   }
 
   /**
@@ -142,9 +82,8 @@ class Endboss extends MovableObject {
    * @returns {void}
    */
   configureStartState() {
-    this.x = 2700;
-    this.spawnX = this.x;
-    this.offset = { top: 80, right: 5, bottom: 5, left: 25 };
+    this.x = this.spawnX;
+    this.offset = { ...END_BOSS_BASE_STATS.offset };
   }
 
   /**
@@ -174,25 +113,6 @@ class Endboss extends MovableObject {
   }
 
   /**
-   * Activate once the boss is visible in the viewport.
-   * @param {number} [buffer=0] - Extra pixels around the viewport.
-   * @returns {void}
-   */
-  activateWhenVisible(buffer = 0) {
-    if (this.isOnScreen(this.world, buffer)) {
-      this.activate();
-      return;
-    }
-    this.visibilityCheckId = setInterval(() => {
-      if (this.world && this.isOnScreen(this.world, buffer)) {
-        clearInterval(this.visibilityCheckId);
-        this.visibilityCheckId = null;
-        this.activate();
-      }
-    }, 120);
-  }
-
-  /**
    * Checks if the boss is inside the camera view.
    * @param {World} world - Game world.
    * @param {number} [buffer=0] - Extra pixels around the viewport.
@@ -203,131 +123,6 @@ class Endboss extends MovableObject {
     const w = world.ctx.canvas.width;
     const screenX = this.x + (world.camera_x || 0);
     return screenX + this.width > -buffer && screenX < w + buffer;
-  }
-
-  /**
-   * Starts animation and AI once activated.
-   * @returns {void}
-   */
-  activate() {
-    if (this.activated) return;
-    this.activated = true;
-    this.animate();
-    this.startRandomBehavior();
-  }
-
-  /**
-   * Animation loop based on current state.
-   * @returns {void}
-   */
-  animate() {
-    this.startAnimationTimer();
-  }
-
-  /**
-   * Starts or restarts the animation timer based on the current speed.
-   * @returns {void}
-   */
-  startAnimationTimer() {
-    if (this.animationIntervalId) clearInterval(this.animationIntervalId);
-    this.animationIntervalId = setInterval(
-      () => this.performAnimationStep(),
-      this.animationMs
-    );
-  }
-
-  /**
-   * Plays the appropriate animation frame for the current state.
-   * @returns {void}
-   */
-  performAnimationStep() {
-    if (performance.now() < this.hurtOverlayUntil) {
-      this.playAnimation(this.IMAGES_HURT);
-      return;
-    }
-    this.playAnimation(this.getImagesForState(this.currentState));
-  }
-
-  /**
-   * Resolves the correct sprite list for a given state.
-   * @param {string} state - Current action state.
-   * @returns {string[]}
-   */
-  getImagesForState(state) {
-    const map = {
-      walkForward: this.IMAGES_WALK,
-      walkBackward: this.IMAGES_WALK,
-      return: this.IMAGES_WALK,
-      wait: this.IMAGES_WAIT,
-      alert: this.IMAGES_ALERT,
-      attack: this.IMAGES_ATTACK,
-      jumpAttack: this.IMAGES_JUMPATTACK,
-      dead: this.IMAGES_DEAD,
-    };
-    return map[state] || this.IMAGES_WAIT;
-  }
-
-  /**
-   * Plays a list of actions one after another.
-   * @param {string[]} sequence - Action names.
-   * @returns {Promise<void>}
-   */
-  async playSequence(sequence) {
-    for (const name of sequence) {
-      if (this.shouldStopSequence()) break;
-      await this.runSequenceAction(name);
-    }
-    this.finishSequenceIfAlive();
-  }
-
-  /**
-   * Checks if the sequence should stop due to death.
-   * @returns {boolean}
-   */
-  shouldStopSequence() {
-    return this.currentState === "dead" || this.dead;
-  }
-
-  /**
-   * Runs a single sequence action by name and handles delays.
-   * @param {string} name - Action method name.
-   * @returns {Promise<void>}
-   */
-  async runSequenceAction(name) {
-    const action = this[name];
-    if (typeof action !== "function") return;
-    const result = action.call(this);
-    if (result instanceof Promise) {
-      await result;
-      return;
-    }
-    await this.sleep(this.ACTION_DELAYS[name] ?? 1000);
-  }
-
-  /**
-   * Resets state after completing a sequence if still alive.
-   * @returns {void}
-   */
-  finishSequenceIfAlive() {
-    if (this.dead || this.currentState === "dead") return;
-    this.currentState = "wait";
-    this.playAnimation(this.IMAGES_WAIT);
-  }
-
-  /**
-   * Periodically picks and plays a random behavior sequence.
-   * @returns {void}
-   */
-  startRandomBehavior() {
-    this.behaviorInterval = setInterval(async () => {
-      if (this.isPlayingSequence || this.dead) return;
-
-      const seq = this.SEQUENCES[(Math.random() * this.SEQUENCES.length) | 0];
-
-      this.isPlayingSequence = true;
-      await this.playSequence(seq);
-      this.isPlayingSequence = false;
-    }, 1000);
   }
 
   /**
@@ -584,7 +379,7 @@ class Endboss extends MovableObject {
       wait: 600,
     });
 
-    this.startAnimationTimer();
+    this.animations.startAnimationTimer();
   }
 
   /**
@@ -595,21 +390,9 @@ class Endboss extends MovableObject {
     this.hurtOverlayUntil = 0;
     this.isJumpAttackActive = false;
     this.cancelMove();
-    this.stopBehaviorTimers();
+    this.behavior.stopAll();
     this.enterDeathState();
     this.scheduleDeathCleanup();
-  }
-
-  /**
-   * Clears timers associated with behavior and visibility checks.
-   * @returns {void}
-   */
-  stopBehaviorTimers() {
-    if (this.behaviorInterval) clearInterval(this.behaviorInterval);
-    if (this.visibilityCheckId) {
-      clearInterval(this.visibilityCheckId);
-      this.visibilityCheckId = null;
-    }
   }
 
   /**
@@ -635,7 +418,7 @@ class Endboss extends MovableObject {
    * @returns {void}
    */
   finishDeath() {
-    if (this.animationIntervalId) clearInterval(this.animationIntervalId);
+    this.animations.stop();
     this.dead = true;
     this.removeFromWorld();
   }
