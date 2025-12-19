@@ -540,14 +540,6 @@ canvas {
     padding: 16px;
   }
 
-  .touch-controls {
-    display: flex;
-  }
-
-  .touch-controls__mute {
-    display: block;
-  }
-
   .start-screen {
     width: 100%;
     padding: clamp(16px, 0vw, 16px);
@@ -588,7 +580,17 @@ canvas {
   }
 }
 
-@media (max-width: 1024px) and (orientation: portrait) {
+@media (max-width: 1024px), (hover: none) and (pointer: coarse) {
+  .touch-controls {
+    display: flex;
+  }
+
+  .touch-controls__mute {
+    display: block;
+  }
+}
+
+@media (max-width: 700px) and (orientation: portrait) {
   body:not(.legal-page) {
     justify-content: center;
     align-items: center;
